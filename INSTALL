@@ -1,0 +1,21 @@
+
+Requirements
+============
+
+ * GCC or other C/C++ compiler (support for C++14 required)
+ * CMake
+ * libpthreads (+ headers)
+ * openssl (+ headers)
+ * nlohmann's 'JSON for Modern C++' (https://github.com/nlohmann/json)
+
+
+Build steps
+===========
+
+Extract a directory of your liking, then:
+
+ $ mkdir build && cd build
+ $ cmake -G "Unix Makefiles" ..
+ $ make -j$(nproc)
+ $ su
+ # make install
