@@ -10,7 +10,7 @@ ConnectionManager::ConnectionManager(Listener& listener) :
 {
 }
 
-void ConnectionManager::addConnection(Socket &&socket)
+void ConnectionManager::addConnection(SocketBase &&socket)
 {
     OBTAIN_LOCK(_clients_lock);
 
@@ -21,7 +21,7 @@ void ConnectionManager::addConnection(Socket &&socket)
     mlog(DEBUG, "Added connection, new total: %ld", _clients.size());
 }
 
-void ConnectionManager::addConnection(Socket &&socket, void *manager)
+void ConnectionManager::addConnection(SocketBase &&socket, void *manager)
 {
     ((ConnectionManager *) manager)->addConnection(std::move(socket));
 }
@@ -60,7 +60,7 @@ int ConnectionManager::listen()
     return _listener.listen(ConnectionManager::addConnection, this);
 }
 
-ConnectionManager::Connection::Connection(ConnectionManager &manager, Socket &&socket) : Socket(std::move(socket)),
+ConnectionManager::Connection::Connection(ConnectionManager &manager, SocketBase &&socket) : Socket(std::move(socket)),
     receiver(this),
     _manager(manager),
     _dangling(false)
@@ -76,49 +76,6 @@ void ConnectionManager::Connection::cleanup()
 {
     mlog(DEBUG, "connection [%p]: Cleaning up", this);
     this->_manager.remove(*this);
-}
-
-void ConnectionManager::Connection::send(const Packet &packet)
-{
-    ssize_t len = write(_fd, packet.data, packet.length);
-
-    if (len > 0)
-    {
-        if ((size_t) len < packet.length)
-        {
-            mlog(WARNING, "Unable to write entire packet, retrying...");
-            this->send(Packet(packet.data + len, packet.length - len));
-        }
-        return;
-    }
-    else if (!len)
-        mlog(DEBUG, "connection [%p]: Closed by peer", this);
-    else
-        mlog(ERROR, "connection [%p]: Write error %d", this, errno);
-}
-
-void ConnectionManager::Connection::receive()
-{
-    uint8_t buffer[8192];
-    int len;
-
-    for (;;)
-    {
-        len = read(_fd, buffer, sizeof(buffer));
-
-        if (len > 0)
-            this->onReceive(Packet(buffer, len));
-        else
-        {
-            if (!len)
-                mlog(DEBUG, "connection [%p]: Closed by peer", this);
-            else
-                mlog(ERROR, "connection [%p]: Receive error %d", this, errno);
-
-            this->close();
-            break;
-        }
-    }
 }
 
 ConnectionManager::Connection::ReceiverThread::ReceiverThread(Connection *parent) :

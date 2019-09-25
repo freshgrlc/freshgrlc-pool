@@ -6,6 +6,7 @@
 #include <pthread.h>
 
 #include "Listener.h"
+#include "Socket.h"
 #include "Packet.h"
 
 #include <Lock.h>
@@ -17,9 +18,7 @@ class ConnectionManager
         class Connection : public Socket
         {
             public:
-                Connection(ConnectionManager &manager, Socket &&socket);
-
-                void send(const Packet &packet);
+                Connection(ConnectionManager &manager, SocketBase &&socket);
 
                 inline void enableProcessing(void)  { this->receiver.run(); }
                 inline bool dangling(void)          { return _dangling; }
@@ -58,16 +57,13 @@ class ConnectionManager
                 ConnectionManager &_manager;
                 bool _dangling;
 
-                void receive(void);
                 void cleanup(void);
-
-                virtual void onReceive(const Packet &packet) = 0;
         };
 
         ConnectionManager(Listener &listener);
 
-        void addConnection(Socket &&socket);
-        static void addConnection(Socket &&socket, void *manager);
+        void addConnection(SocketBase &&socket);
+        static void addConnection(SocketBase &&socket, void *manager);
 
         int listen(void);
 
@@ -81,7 +77,7 @@ class ConnectionManager
 
         void remove(Connection &connection);
 
-        virtual std::unique_ptr<Connection> makeConnection(Socket &&socket, ConnectionManager &manager) = 0;
+        virtual std::unique_ptr<Connection> makeConnection(SocketBase &&socket, ConnectionManager &manager) = 0;
 };
 
 #endif

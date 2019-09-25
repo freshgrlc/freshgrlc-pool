@@ -24,7 +24,7 @@ class StratumServer : public ConnectionManager
 
         uint32_t jobCounter;
 
-        virtual std::unique_ptr<Connection> makeConnection(Socket &&socket, ConnectionManager &manager) override;
+        virtual std::unique_ptr<Connection> makeConnection(SocketBase &&socket, ConnectionManager &manager) override;
 };
 
 #endif

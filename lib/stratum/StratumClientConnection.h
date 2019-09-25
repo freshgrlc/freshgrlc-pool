@@ -15,7 +15,7 @@ class StratumJob;
 class StratumClientConnection : public ConnectionManager::Connection
 {
     public:
-        StratumClientConnection(ConnectionManager &manager, Socket &&socket, StratumServer *server);
+        StratumClientConnection(ConnectionManager &manager, SocketBase &&socket, StratumServer *server);
         virtual ~StratumClientConnection(void);
 
         void sendReply(const StratumCall &call, const json &reply);

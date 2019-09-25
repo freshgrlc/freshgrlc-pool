@@ -1,19 +1,25 @@
 #ifndef SOCKET_SOCKET_H
 #define SOCKET_SOCKET_H
 
-class Socket
+#include "SocketBase.h"
+#include "Packet.h"
+
+
+class Socket : public SocketBase
 {
     public:
-        Socket(int fd = -1);
-        Socket(Socket &&socket);
-        virtual ~Socket(void);
+        using SocketBase::SocketBase;
+        inline Socket(SocketBase &&socket) : SocketBase(std::move(socket)) {}
 
-        void close(void);
-
-        inline bool connected(void)     { return this->_fd >= 0; }
+        void send(const Packet &packet);
 
     protected:
-        int _fd;
+        void receive(void);
+
+        static int openConnectionTo(const std::string &host, int port);
+
+    private:
+        virtual void onReceive(const Packet &packet) = 0;
 };
 
 #endif

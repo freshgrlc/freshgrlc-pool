@@ -12,7 +12,7 @@ StratumServer::StratumServer(Listener &&listener) : ConnectionManager(_listener)
 {
 }
 
-std::unique_ptr<ConnectionManager::Connection> StratumServer::makeConnection(Socket &&socket, ConnectionManager &manager)
+std::unique_ptr<ConnectionManager::Connection> StratumServer::makeConnection(SocketBase &&socket, ConnectionManager &manager)
 {
     return std::make_unique<StratumClientConnection>(manager, std::move(socket), this);
 }

@@ -17,7 +17,7 @@
 using json_exception = nlohmann::detail::exception;
 
 
-StratumClientConnection::StratumClientConnection(ConnectionManager &manager, Socket &&socket, StratumServer *server) : Connection(manager, std::move(socket)),
+StratumClientConnection::StratumClientConnection(ConnectionManager &manager, SocketBase &&socket, StratumServer *server) : Connection(manager, std::move(socket)),
     _server(*server),
     clientSoftware("<unknown mining software>"),
     clientUsername(""),

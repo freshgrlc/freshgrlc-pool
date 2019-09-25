@@ -7,13 +7,13 @@
 #include "ErrnoError.h"
 
 
-Listener::Listener(int port, bool ipv6) : Socket(),
+Listener::Listener(int port, bool ipv6) : SocketBase(),
     _port(port),
     _ipv6(ipv6)
 {
 }
 
-Listener::Listener(Listener &&listener) : Socket(std::move(listener)),
+Listener::Listener(Listener &&listener) : SocketBase(std::move(listener)),
     _port(listener._port),
     _ipv6(listener._ipv6)
 {
@@ -97,7 +97,7 @@ int Listener::listen(Listener::IncomingConnectionHandler handler, void *context)
 
         if ((conn_sock_fd = accept(_fd, (struct sockaddr *) &peer, &addr_len)) >= 0)
         {
-            Socket s(conn_sock_fd);
+            SocketBase s(conn_sock_fd);
 
             try
             {

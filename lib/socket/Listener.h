@@ -1,15 +1,14 @@
 #ifndef SOCKET_LISTENER_H
 #define SOCKET_LISTENER_H
 
-#include "Socket.h"
-
+#include "SocketBase.h"
 
 class ConnectionManager;
 
-class Listener : public Socket
+class Listener : public SocketBase
 {
     public:
-        typedef void (*IncomingConnectionHandler)(Socket &&socket, void *context);
+        typedef void (*IncomingConnectionHandler)(SocketBase &&socket, void *context);
 
         Listener(int port, bool ipv6 = true);
         Listener(Listener &&listener);
