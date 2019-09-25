@@ -9,6 +9,7 @@ include_directories(lib lib/util)
 add_subdirectory(lib/util)
 add_subdirectory(lib/socket)
 add_subdirectory(lib/stratum)
+add_subdirectory(lib/bitcoinrpc)
 
 add_executable(test test.cpp)
-target_link_libraries(test util socket stratum pthread)
+target_link_libraries(test util socket stratum bitcoinrpc pthread)
