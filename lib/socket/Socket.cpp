@@ -9,6 +9,8 @@
 #include "Socket.h"
 #include "ErrnoError.h"
 
+static Lock _gethostbyname2_lock;
+
 
 void Socket::send(const Packet &packet)
 {
@@ -53,18 +55,21 @@ void Socket::receive()
     }
 }
 
-int Socket::openConnectionTo(const std::string &host, int port)
+union ip_addr_t {
+    struct sockaddr s_addr;
+    struct sockaddr_in ipv4_addr;
+    struct sockaddr_in6 ipv6_addr;
+};
+
+static ssize_t resolve(const std::string &host, ip_addr_t &ip_addr, int port)
 {
-    union {
-        struct sockaddr_in ipv4_addr;
-        struct sockaddr_in6 ipv6_addr;
-    } ip_addr;
-    size_t ip_addr_len;
+    struct hostent *info;
     const uint8_t *ip;
+    ssize_t ip_addr_len;
 
     mlog(DEBUG, "Resolving %s...", host.c_str());
 
-    struct hostent *info;
+    OBTAIN_LOCK(_gethostbyname2_lock);
 
     if (!(info = gethostbyname2(host.c_str(), AF_INET6)))
         info = gethostbyname2(host.c_str(), AF_INET);
@@ -106,7 +111,18 @@ int Socket::openConnectionTo(const std::string &host, int port)
             return -1;
     }
 
-    int fd = socket(info->h_addrtype, SOCK_STREAM, 0);
+    return ip_addr_len;
+}
+
+int Socket::openConnectionTo(const std::string &host, int port)
+{
+    ip_addr_t ip_addr;
+    ssize_t ip_addr_len;
+
+    if ((ip_addr_len = resolve(host, ip_addr, port)) < 0)
+        return -1;
+
+    int fd = socket(ip_addr.s_addr.sa_family, SOCK_STREAM, 0);
 
     if (fd < 0)
     {
@@ -114,7 +130,7 @@ int Socket::openConnectionTo(const std::string &host, int port)
         return -1;
     }
 
-    if (connect(fd, (const struct sockaddr *) &ip_addr, ip_addr_len) < 0)
+    if (connect(fd, &ip_addr.s_addr, ip_addr_len) < 0)
     {
         mlog(ERROR, "Failed to connect to '%s:%d': error %d", host.c_str(), port, errno);
         ::close(fd);
