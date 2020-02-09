@@ -10,6 +10,11 @@ add_subdirectory(lib/util)
 add_subdirectory(lib/socket)
 add_subdirectory(lib/stratum)
 add_subdirectory(lib/bitcoinrpc)
+add_subdirectory(lib/mining)
+
+add_subdirectory(plugins)
+
+add_definitions(-DMODULE=main)
 
 add_executable(test test.cpp)
-target_link_libraries(test util socket stratum bitcoinrpc pthread)
+target_link_libraries(test util socket stratum bitcoinrpc mining pthread)

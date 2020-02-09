@@ -22,13 +22,15 @@ class StratumClientConnection : public ConnectionManager::Connection
         void sendReply(const StratumCall &call, const json &reply, const json &error);
         void sendUnsolicited(std::string method, const json &params, int id = -1);
 
-        void sendJob(void);
+        void sendJob(bool forceNew = false);
         void updateDiff(double newDiff);
+        inline double diff(void)                    { return this->currentDiff; }
 
         void send(const json &payload);
         using Connection::send;
 
-        const StratumJob &job(void);
+        const StratumJob &job(bool forceNew = false);
+        void clearJobs(void);
 
         inline std::string connectionId(void) const { return _connectionId.asHex(); }
         inline uint32_t extraNonce1(void) const     { return *((const uint32_t *) &_connectionId.begin()[0]); }

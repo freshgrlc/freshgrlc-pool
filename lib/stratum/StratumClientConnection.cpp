@@ -63,14 +63,15 @@ void StratumClientConnection::sendUnsolicited(std::string method, const json &pa
     this->send(msg);
 }
 
-void StratumClientConnection::sendJob()
+void StratumClientConnection::sendJob(bool forceNew)
 {
-    auto &job = this->job();
+    auto &job = this->job(forceNew);
 
     if (job.diff() != this->currentDiff)
         this->updateDiff(job.diff());
 
     /* Send job */
+    this->sendUnsolicited("mining.notify", job.toJson(forceNew));
 }
 
 void StratumClientConnection::updateDiff(double newDiff)
@@ -84,11 +85,11 @@ void StratumClientConnection::send(const json &payload)
     this->send(Packet(payload.dump() + "\n"));
 }
 
-const StratumJob &StratumClientConnection::job()
+const StratumJob &StratumClientConnection::job(bool forceNew)
 {
     OBTAIN_LOCK(_jobsLock);
 
-    if (this->activeJob)
+    if (!forceNew && this->activeJob)
         return *this->activeJob;
 
     this->jobs.push_back(this->server().createJob(this));
@@ -97,6 +98,16 @@ const StratumJob &StratumClientConnection::job()
     mlog(DEBUG, "New job '%d'", this->activeJob->id());
 
     return *this->activeJob;
+}
+
+void StratumClientConnection::clearJobs()
+{
+    OBTAIN_LOCK(_jobsLock);
+
+    this->jobs.clear();
+    this->activeJob = NULL;
+
+    mlog(DEBUG, "Cleared jobs");
 }
 
 ByteString StratumClientConnection::genConnectionID() const

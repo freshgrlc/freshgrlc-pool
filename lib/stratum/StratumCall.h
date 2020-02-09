@@ -18,6 +18,8 @@ class StratumClientConnection;
 class StratumCall
 {
     public:
+        inline virtual ~StratumCall(void) {}
+
         const int messageId;
         const std::string &method;
 

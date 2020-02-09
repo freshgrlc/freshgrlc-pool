@@ -69,12 +69,16 @@ class ConnectionManager
 
         inline Listener &listener(void)                                         { return _listener; }
         inline const std::vector<std::unique_ptr<Connection>> &clients(void)    { return _clients; }
+        inline Lock &clientsLock(void)                                          { return _clients_lock; }
 
     private:
         Listener &_listener;
         std::vector<std::unique_ptr<Connection>> _clients;
+
+    protected:
         Lock _clients_lock;
 
+    private:
         void remove(Connection &connection);
 
         virtual std::unique_ptr<Connection> makeConnection(SocketBase &&socket, ConnectionManager &manager) = 0;

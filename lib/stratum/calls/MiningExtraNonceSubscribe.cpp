@@ -18,5 +18,4 @@ MiningExtraNonceSubscribe::MiningExtraNonceSubscribe(int messageId, const json &
 void MiningExtraNonceSubscribe::process(StratumClientConnection &connection)
 {
     connection.sendReply(*this, (json) false, (json) "Not supported");
-    connection.sendJob();
 }

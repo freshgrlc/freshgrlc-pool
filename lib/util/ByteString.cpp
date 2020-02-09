@@ -1,5 +1,7 @@
 #include "ByteString.h"
 
+#include <cstring>
+
 static uint8_t _toRaw(char hex)
 {
     if (hex >= '0' && hex <= '9')
@@ -17,6 +19,41 @@ static uint8_t _toRaw(char hex)
 static uint8_t toRaw(const char *hex)
 {
     return (_toRaw(hex[0]) << 4) | _toRaw(hex[1]);
+}
+
+ByteString &ByteString::operator+=(const ConstByteStringRef &toAppend)
+{
+    size_t oldsize = this->size();
+
+    this->resize(oldsize + toAppend.length);
+
+    for (size_t i = 0; i < toAppend.length; i++)
+        (*this)[oldsize + i] = toAppend.data[i];
+
+    return *this;
+}
+
+ByteString &ByteString::operator+=(const ByteString &toAppend)
+{
+    if (&toAppend != this)
+        return *this += ConstByteStringRef(toAppend);
+
+    size_t size = this->size();
+
+    this->resize(size * 2);
+    memcpy(this->data() + size, this->data(), size);
+
+    return *this;
+}
+
+ByteString ByteString::reverse()
+{
+    std::vector<uint8_t> reversed(this->size());
+
+    for (size_t i = 0; i < this->size(); i++)
+        reversed[i] = (*this)[this->size() - 1 - i];
+
+    return ByteString(reversed);
 }
 
 ByteString ByteString::fromHex(const std::string &hex)

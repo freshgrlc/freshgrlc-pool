@@ -5,6 +5,16 @@
 #include <stdlib.h>
 
 
+#ifdef LOCK_DEBUG
+
+#define ldbg(...)           do { if (&_parent != &__logger_lock) _mlog("locking", DEBUG, __VA_ARGS__); } while (0)
+extern Lock __logger_lock;
+
+#else
+#define ldbg(...)
+#endif
+
+
 Lock::Lock()
 {
     int result = pthread_mutex_init(&_mutex, NULL);
@@ -39,10 +49,13 @@ void Lock::releaseUnmanaged()
 Lock::Ref::Ref(Lock& parent) :
     _parent(parent)
 {
+    ldbg("Acquiring lock %p", &_parent);
     _parent.aquireUnmanaged();
+    ldbg("Acquired  lock %p", &_parent);
 }
 
 Lock::Lock::Ref::~Ref()
 {
     _parent.releaseUnmanaged();
+    ldbg("Released  lock %p", &_parent);
 }
