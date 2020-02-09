@@ -7,6 +7,7 @@ Requirements
  * libpthreads (+ headers)
  * openssl (+ headers)
  * nlohmann's 'JSON for Modern C++' (https://github.com/nlohmann/json)
+ * libbitcoinconsensus.so (from your favorite full node implementation)
 
 
 Build steps
