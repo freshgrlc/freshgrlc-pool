@@ -2,6 +2,7 @@
 #define STRATUM_STRATUMCLIENT_H
 
 #include <socket/ConnectionManager.h>
+#include <mining/CoinbaseTransaction.h>
 
 #include "StratumCall.h"
 
@@ -15,6 +16,8 @@ class StratumJob;
 class StratumClientConnection : public ConnectionManager::Connection
 {
     public:
+        typedef CoinbaseTransaction::nonce1_t nonce1_t;
+
         StratumClientConnection(ConnectionManager &manager, SocketBase &&socket, StratumServer *server);
         virtual ~StratumClientConnection(void);
 
@@ -32,8 +35,10 @@ class StratumClientConnection : public ConnectionManager::Connection
         const StratumJob &job(bool forceNew = false);
         void clearJobs(void);
 
+        std::unique_ptr<StratumJob> getActiveJob(uint32_t id);
+
         inline std::string connectionId(void) const { return _connectionId.asHex(); }
-        inline uint32_t extraNonce1(void) const     { return *((const uint32_t *) &_connectionId.begin()[0]); }
+        inline nonce1_t extraNonce1(void) const     { return *((const nonce1_t *) &_connectionId.begin()[0]); }
         inline StratumServer &server(void)          { return _server; }
 
     private:

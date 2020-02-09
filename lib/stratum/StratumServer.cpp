@@ -7,9 +7,10 @@
 #include <mining/CoinbaseWitnessCommitment.h>
 
 
-StratumServer::StratumServer(Listener &&listener, const NetworkStateInitializer &initializer, const std::string &coinbaseId) : ConnectionManager(_listener),
-    extraNonce2Size(4),
+StratumServer::StratumServer(Listener &&listener, const NetworkStateInitializer &initializer, const HashPluginRef hasher, const std::string &coinbaseId) : ConnectionManager(_listener),
+    extraNonce2Size(sizeof(CoinbaseTransaction::nonce2_t)),
     _listener(std::move(listener)),
+    hasher(hasher),
     coinbaseId(coinbaseId),
     jobCounter(0)
 {
@@ -35,7 +36,7 @@ std::unique_ptr<StratumJob> StratumServer::createJob(StratumClientConnection *cl
 {
     OBTAIN_LOCK(_jobGeneratorLock);
 
-    return std::make_unique<StratumJob>(++this->jobCounter, client->diff(), this->state, this->coinbase, this->merkleBranch);
+    return std::make_unique<StratumJob>(++this->jobCounter, client->diff(), this->state, this->coinbase, this->merkleBranch, this->hasher);
 }
 
 void StratumServer::updateCoinbaseOutputs(const CoinbaseOutputs &newOutputs)

@@ -6,6 +6,7 @@
 
 #include <mining/CoinbaseTransaction.h>
 #include <mining/MerkleBranch.h>
+#include <interfaces/plugins/HashPlugin.h>
 
 #include "NetworkState.h"
 
@@ -22,9 +23,18 @@ using json = nlohmann::json;
 class StratumJob
 {
     public:
-        StratumJob(uint32_t id, double diff, const NetworkStateRef &networkState, const CoinbaseTransactionRef &coinbase, const MerkleBranchRef &merkleBranch);
+        class validation_error : public std::runtime_error
+        {
+            public:
+                using runtime_error::runtime_error;
+        };
+
+        StratumJob(uint32_t id, double diff, const NetworkStateRef &networkState, const CoinbaseTransactionRef &coinbase, const MerkleBranchRef &merkleBranch, HashPluginRef hasher);
+        StratumJob(const StratumJob &them);
 
         json toJson(bool force) const;
+
+        void checkSolution(uint32_t time, uint32_t nonce, CoinbaseTransaction::nonce1_t extraNonce1, CoinbaseTransaction::nonce2_t extraNonce2);
 
         inline uint32_t id(void) const              { return _id; }
         inline double diff(void) const              { return _diff; }
@@ -38,6 +48,8 @@ class StratumJob
         NetworkStateRef networkState;
         CoinbaseTransactionRef coinbase;
         MerkleBranchRef merkleBranch;
+
+        HashPluginRef hasher;
 };
 
 #endif

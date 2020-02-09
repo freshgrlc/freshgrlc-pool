@@ -7,6 +7,7 @@
 
 #include "calls/MiningAuthorize.h"
 #include "calls/MiningExtraNonceSubscribe.h"
+#include "calls/MiningSubmit.h"
 #include "calls/MiningSubscribe.h"
 
 
@@ -34,6 +35,7 @@ std::unique_ptr<StratumCall> StratumCall::parseMessage(const json &encoded)
 
     CHECK_AND_RETURN_IF_MATCHED(MiningAuthorize);
     CHECK_AND_RETURN_IF_MATCHED(MiningExtraNonceSubscribe);
+    CHECK_AND_RETURN_IF_MATCHED(MiningSubmit);
     CHECK_AND_RETURN_IF_MATCHED(MiningSubscribe);
 
     return nullptr;

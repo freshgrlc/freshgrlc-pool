@@ -23,7 +23,7 @@ CoinbaseTransaction CoinbaseTransaction::build(uint32_t height, const ConstByteS
     return build(height, 0, 0, identification, outputs);
 }
 
-CoinbaseTransaction CoinbaseTransaction::build(uint32_t height, uint32_t nonce1, uint32_t nonce2, const ConstByteStringRef &identification, const CoinbaseOutputs &outputs)
+CoinbaseTransaction CoinbaseTransaction::build(uint32_t height, nonce1_t nonce1, nonce2_t nonce2, const ConstByteStringRef &identification, const CoinbaseOutputs &outputs)
 {
     ByteString raw;
     size_t part1Size = 0;
@@ -58,7 +58,7 @@ CoinbaseTransaction CoinbaseTransaction::build(uint32_t height, uint32_t nonce1,
     return CoinbaseTransaction(std::move(raw), part1Size, part2Start);
 }
 
-script::Script CoinbaseTransaction::makeCoinbaseRedeemScript(uint32_t height, uint32_t nonce1, uint32_t nonce2, const ConstByteStringRef &identification, size_t &part1Size, size_t &part2Start)
+script::Script CoinbaseTransaction::makeCoinbaseRedeemScript(uint32_t height, nonce1_t nonce1, nonce2_t nonce2, const ConstByteStringRef &identification, size_t &part1Size, size_t &part2Start)
 {
     using namespace script;
 

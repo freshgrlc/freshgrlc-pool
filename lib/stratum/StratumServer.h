@@ -7,6 +7,7 @@
 #include <mining/CoinbaseOutputs.h>
 #include <mining/MerkleBranch.h>
 #include <mining/CoinbaseTransaction.h>
+#include <interfaces/plugins/HashPlugin.h>
 
 #include "NetworkState.h"
 
@@ -25,7 +26,7 @@ class StratumServer : public ConnectionManager
 
         const int extraNonce2Size;
 
-        StratumServer(Listener &&listener, const NetworkStateInitializer &initializer, const std::string &coinbaseId);
+        StratumServer(Listener &&listener, const NetworkStateInitializer &initializer, const HashPluginRef hasher, const std::string &coinbaseId);
 
         std::unique_ptr<StratumJob> createJob(StratumClientConnection *client);
 
@@ -37,6 +38,8 @@ class StratumServer : public ConnectionManager
     private:
         Listener _listener;
         Lock _jobGeneratorLock;
+
+        HashPluginRef hasher;
 
         ByteString coinbaseId;
 

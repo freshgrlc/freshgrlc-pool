@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <vector>
 #include <string>
+#include <stdexcept>
+#include <cstring>
 
 #include "ConstByteStringRef.h"
 
@@ -39,6 +41,25 @@ class ByteString : public std::vector<uint8_t>
         inline std::string asHex(void) const                            { return ConstByteStringRef(*this).asHex(); }
         inline std::string asHexPretty(const std::string prefix = "<", const std::string postfix = ">", int groupSize = 4) const
                                                                         { return ConstByteStringRef(*this).asHexPretty(prefix, postfix, groupSize); }
+
+        template<typename T> T parseUIntLE(void)
+        {
+            if (this->size() > sizeof(T))
+                throw std::runtime_error(
+                        std::string("Cannot parse ") + std::to_string(this->size()) +
+                                    " byte raw value to " + std::to_string(sizeof(T)) +
+                                    " byte little-endian integer");
+
+            T result = 0;
+
+            memcpy(&result, &(*this)[0], this->size());
+            return result;
+        }
+
+        template<typename T> T parseUIntBE(void)
+        {
+            return this->reverse().parseUIntLE<T>();
+        }
 
         static ByteString fromHex(const std::string &hex);
 

@@ -1,27 +1,50 @@
 #include <nlohmann/json.hpp>
 
+#include <mining/hashplugin.h>
+#include <mining/MerkleBranch.h>
+#include <mining/BlockHeader.h>
+
+#include <util/logger.h>
+
 #include "StratumJob.h"
 
 #include <ctime>
 
 
 template <typename int_t>
-static std::string int2hex(int_t i)
+static std::string int2hex(int_t i, bool littleEndian = false)
 {
-    return ByteString((uint8_t *) &i, sizeof(i)).asHex();
+    ByteString encoded((uint8_t *) &i, sizeof(i));
+
+    if (littleEndian)
+        return encoded.asHex();
+
+    return encoded.reverse().asHex();
 }
 
-StratumJob::StratumJob(uint32_t id, double diff, const NetworkStateRef &networkState, const CoinbaseTransactionRef &coinbase, const MerkleBranchRef &merkleBranch) :
+StratumJob::StratumJob(uint32_t id, double diff, const NetworkStateRef &networkState, const CoinbaseTransactionRef &coinbase, const MerkleBranchRef &merkleBranch, HashPluginRef hasher) :
     _id(id),
     _diff(diff),
     networkState(networkState),
     coinbase(coinbase),
-    merkleBranch(merkleBranch)
+    merkleBranch(merkleBranch),
+    hasher(hasher)
 {
     _creationTime = (uint32_t) std::time(NULL);
 
     if (_creationTime < networkState->miningStartTime)
         _creationTime = networkState->miningStartTime;
+}
+
+StratumJob::StratumJob(const StratumJob &them) :
+    _id(them._id),
+    _diff(them._diff),
+    _creationTime(them._creationTime),
+    networkState(them.networkState),
+    coinbase(them.coinbase),
+    merkleBranch(them.merkleBranch),
+    hasher(them.hasher)
+{
 }
 
 json StratumJob::toJson(bool force) const
@@ -42,15 +65,31 @@ json StratumJob::toJson(bool force) const
 
     return json::array({
         int2hex(this->id()),
-        this->networkState->previousBlock.bytes().asHex(),
+        ByteString(this->networkState->previousBlock.bytes()).reverse().asHex(),
         this->coinbase->part1().asHex(),
         this->coinbase->part2().asHex(),
         this->merkleBranch->asHexArray(),
         int2hex(this->networkState->version),
-        int2hex(this->networkState->bits),
+        int2hex(this->networkState->bits, true),
         int2hex(this->creationTime()),
         force
     });
 }
 
+void StratumJob::checkSolution(uint32_t time, uint32_t nonce, CoinbaseTransaction::nonce1_t extraNonce1, CoinbaseTransaction::nonce2_t extraNonce2)
+{
+    static const HashPluginRef sha256dHasher = get_hashplugin("sha256d");
 
+    ByteString rawCoinbaseTx = this->coinbase->part1();
+
+    rawCoinbaseTx.appendLE(extraNonce1);
+    rawCoinbaseTx.appendLE(extraNonce2);
+
+    rawCoinbaseTx += this->coinbase->part2();
+
+    Hash256 coinbaseTxId = sha256dHasher->hash(rawCoinbaseTx);
+    MerkleRoot merkleRoot = this->merkleBranch->getRoot(coinbaseTxId);
+    BlockHash hash = BlockHeader(this->networkState->version, this->networkState->previousBlock, merkleRoot, time, this->networkState->bits, nonce).hash(this->hasher);
+
+    mlog(DEBUG, "Received solution from miner: time %08x, nonce %08x, extraNonce2 %08x, share %s", time, nonce, extraNonce2, ByteString(hash.bytes()).reverse().asHex().c_str());
+}

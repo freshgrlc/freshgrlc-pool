@@ -32,6 +32,9 @@ class StratumCall
 };
 
 #ifdef INCLUDE_NLOHMANN_JSON_HPP_
+
+#include <util/ByteString.h>
+
 namespace stratum { namespace messages {
 
 template <class T>
@@ -39,6 +42,15 @@ inline T getParam(const json &params, size_t idx, const T &defaultValue)
 {
     if (params.size() > idx)
         return params[idx].get<T>();
+
+    return defaultValue;
+}
+
+template <>
+inline ByteString getParam(const json &params, size_t idx, const ByteString &defaultValue)
+{
+    if (params.size() > idx)
+        return ByteString::fromHex(params[idx].get<std::string>());
 
     return defaultValue;
 }

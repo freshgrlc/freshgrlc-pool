@@ -4,12 +4,21 @@
 #include <interfaces/plugins/HashPlugin.h>
 
 #include "BlockHash.h"
+#include "block.h"
 
 
 class BlockHeader
 {
     public:
-        BlockHash hash(HashPlugin hasher);
+        BlockHeader(uint32_t versionBits, const Hash256 &parentBlockhash, const Hash256 &merkleRoot, uint32_t time, uint32_t difficultyBits, uint32_t nonce);
+        BlockHeader(const ConstByteStringRef &raw);
+
+        BlockHash hash(const HashPluginRef &hasher);
+
+        inline const blockheader &asCStruct(void)   { return this->raw; }
+
+    private:
+        blockheader raw;
 };
 
 #endif

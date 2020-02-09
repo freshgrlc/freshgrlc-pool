@@ -10,6 +10,8 @@ class MerkleNode : public Hash256
         inline MerkleNode(const MerkleNode &that) : Hash256(that) {}
 
         static MerkleNode fromRawTxIdBlob(const ConstByteStringRef &txids);
+
+    friend class MerkleBranch;
 };
 
 class MerkleRoot : public MerkleNode
@@ -19,6 +21,8 @@ class MerkleRoot : public MerkleNode
 
     private:
         inline MerkleRoot(const MerkleNode &rootNode) : MerkleNode(rootNode) {}
+
+    friend class MerkleBranch;
 };
 
 #endif

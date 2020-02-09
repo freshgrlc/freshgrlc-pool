@@ -1,6 +1,7 @@
 #include <bitcoinrpc/RPCConnection.h>
 #include <stratum/StratumServer.h>
 #include <mining/CoinbaseOutput.h>
+#include <mining/hashplugin.h>
 
 #include <util/CommandLineArguments.h>
 #include <util/logger.h>
@@ -53,6 +54,8 @@ int main(int argc, char *argv[])
     int stratumPort = 3032;
     std::string coinbaseSignature = "/FreshGRLC.net/NG/";
 
+    std::string miningAlgorithm = "sha256d";
+
     CommandLineArguments(argc, argv, {
         { stratumPort,          "port",                 'p',        "Port to listen on for incoming stratum connections." },
         { rpcHostname,          "rpc-hostname",         'h',        "Hostname used to connect to the full node RPC interface." },
@@ -60,12 +63,13 @@ int main(int argc, char *argv[])
         { rpcUsername,          "rpc-user",             'u', true,  "Username for full node RPC interface authentication." },
         { rpcPassword,          "rpc-password",         'P', true,  "Password for full node RPC interface authentication." },
         { coinbaseSignature,    "coinbase-signature",   'S',        "Signature to encode in coinbase transactions." },
+        { miningAlgorithm,      "algorithm",            'a',        "Mining algorithm." }
     }).processOrPrintUsageAndExit();
 
     try
     {
         RPCConnection rpc(rpcUsername, rpcPassword, rpcHostname, rpcPort);
-        StratumServer server(Listener(stratumPort), StratumInitializer(rpc), coinbaseSignature);
+        StratumServer server(Listener(stratumPort), StratumInitializer(rpc), get_hashplugin(miningAlgorithm), coinbaseSignature);
 
         return server.listen();
     }

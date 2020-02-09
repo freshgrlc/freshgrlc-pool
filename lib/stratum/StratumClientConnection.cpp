@@ -110,6 +110,25 @@ void StratumClientConnection::clearJobs()
     mlog(DEBUG, "Cleared jobs");
 }
 
+std::unique_ptr<StratumJob> StratumClientConnection::getActiveJob(uint32_t id)
+{
+    OBTAIN_LOCK(_jobsLock);
+
+    if (this->activeJob && this->activeJob->id() == id)
+        return std::make_unique<StratumJob>(*this->activeJob);
+
+    if (this->jobs.empty())
+        return nullptr;
+
+    for (const auto &job : this->jobs)
+    {
+        if (job->id() == id)
+            return std::make_unique<StratumJob>(*job);
+    }
+
+    return nullptr;
+}
+
 ByteString StratumClientConnection::genConnectionID() const
 {
     static const char PREFIX[] = "stratum client";
@@ -147,12 +166,16 @@ void StratumClientConnection::onReceive(const Packet &packet)
 
         if (call->method == stratum::messages::MiningSubscribe::METHOD)
         {
-            this->clientSoftware = ((stratum::messages::MiningSubscribe *) call.get())->client;
+            const auto &message = *((stratum::messages::MiningSubscribe *) call.get());
+
+            this->clientSoftware = message.client;
             mlog(INFO, "Client is using '%s'", this->clientSoftware.c_str());
         }
         else if (call->method == stratum::messages::MiningAuthorize::METHOD)
         {
-            this->clientUsername = ((stratum::messages::MiningAuthorize *) call.get())->username;
+            const auto &message = *((stratum::messages::MiningAuthorize *) call.get());
+
+            this->clientUsername = message.username;
             mlog(INFO, "Client identified as '%s'", this->clientUsername.c_str());
         }
 
