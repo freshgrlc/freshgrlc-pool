@@ -1,5 +1,5 @@
 
-add_definitions(-DMODULE=mining)
+add_definitions(-DMODULE=mining -DPLUGINDIR="${PLUGINDIR}")
 
 add_library(mining STATIC hashplugin.cpp
                           AbstractCoinbaseOutput.cpp CoinbaseOutput.cpp CoinbaseCommitment.cpp CoinbaseWitnessCommitment.cpp

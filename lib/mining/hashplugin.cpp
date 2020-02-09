@@ -14,6 +14,8 @@
 #undef mlog
 #define mlog(level, ...)    _mlog("plugins", level, __VA_ARGS__)
 
+const static std::string ModulePath = PLUGINDIR;
+
 
 class HashPluginManager : private std::map<std::string, HashPluginRef>
 {
@@ -39,7 +41,7 @@ class HashPluginManager : private std::map<std::string, HashPluginRef>
 
         HashPluginRef load(const std::string &algorithm)
         {
-            std::string filename = "hash_" + algorithm + ".so";
+            std::string filename = ModulePath + "/hash_" + algorithm + ".so";
 
             mlog(INFO, "Loading plugin %s", filename.c_str());
 
