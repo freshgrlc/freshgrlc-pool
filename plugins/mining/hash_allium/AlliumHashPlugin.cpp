@@ -1,8 +1,7 @@
 #include <stdexcept>
 
 #include "AlliumHashPlugin.h"
-
-extern "C" void allium_hash(const char* input, char* state);
+#include "allium_hash.h"
 
 void AlliumHashPlugin::hash(const uint8_t *data, int length, HashPlugin::uint256_t hash) const
 {
