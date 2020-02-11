@@ -7,11 +7,13 @@
 #include <mining/CoinbaseWitnessCommitment.h>
 
 
-StratumServer::StratumServer(Listener &&listener, const NetworkStateInitializer &initializer, const HashPluginRef hasher, const std::string &coinbaseId) : ConnectionManager(_listener),
+StratumServer::StratumServer(Listener &&listener, const NetworkStateInitializer &initializer, BlockSubmitterRef &&blockSubmitter, HashPluginRef hasher, const std::string &coinbaseId, double defaultDiff) : ConnectionManager(_listener),
     extraNonce2Size(sizeof(CoinbaseTransaction::nonce2_t)),
     _listener(std::move(listener)),
     hasher(hasher),
+    _blockSubmitter(std::move(blockSubmitter)),
     coinbaseId(coinbaseId),
+    defaultDiff(defaultDiff),
     jobCounter(0)
 {
     /* Initialize server */
@@ -20,6 +22,7 @@ StratumServer::StratumServer(Listener &&listener, const NetworkStateInitializer 
     this->state = initializer.getNetworkState();
     this->witnessCommitment = std::make_shared<CoinbaseWitnessCommitment>(CoinbaseWitnessCommitment::forCoinbaseOnly());
     this->merkleBranch = std::make_shared<MerkleBranch>();
+    this->transactionsToInclude = std::make_shared<RawTransactions>();
 
     this->coinbaseOutputs.push_back(this->witnessCommitment);
     initializer.populateCoinbaseOutputs(this->coinbaseOutputs);
@@ -34,9 +37,14 @@ std::unique_ptr<ConnectionManager::Connection> StratumServer::makeConnection(Soc
 
 std::unique_ptr<StratumJob> StratumServer::createJob(StratumClientConnection *client)
 {
+    double diff = client->diff();
+
+    if (diff < 0.0)
+        diff = this->defaultDiff;
+
     OBTAIN_LOCK(_jobGeneratorLock);
 
-    return std::make_unique<StratumJob>(++this->jobCounter, client->diff(), this->state, this->coinbase, this->merkleBranch, this->hasher);
+    return std::make_unique<StratumJob>(++this->jobCounter, diff, this->state, this->coinbase, this->transactionsToInclude, this->merkleBranch, this->hasher);
 }
 
 void StratumServer::updateCoinbaseOutputs(const CoinbaseOutputs &newOutputs)

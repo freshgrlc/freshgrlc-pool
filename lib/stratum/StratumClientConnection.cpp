@@ -76,6 +76,7 @@ void StratumClientConnection::sendJob(bool forceNew)
 
 void StratumClientConnection::updateDiff(double newDiff)
 {
+    mlog(DEBUG, "Updating client diff to %.3f", newDiff);
     this->sendUnsolicited("mining.set_difficulty", (json) { newDiff });
     this->currentDiff = newDiff;
 }

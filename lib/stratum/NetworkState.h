@@ -13,11 +13,12 @@ class NetworkState
         const uint32_t miningStartTime;
         const uint32_t blockHeight;
         const BlockHash previousBlock;
+        const Hash256 miningTarget;
 
         const uint64_t coinbaseCoins;
 
-        NetworkState(uint32_t version, uint32_t bits, uint32_t blockHeight, const BlockHash &previousBlock, uint64_t coinbaseCoins);
-        NetworkState(uint32_t version, uint32_t bits, uint32_t notBefore, uint32_t blockHeight, const BlockHash &previousBlock, uint64_t coinbaseCoins);
+        NetworkState(uint32_t version, uint32_t bits, uint32_t blockHeight, const BlockHash &previousBlock, const Hash256 &miningTarget, uint64_t coinbaseCoins);
+        NetworkState(uint32_t version, uint32_t bits, uint32_t notBefore, uint32_t blockHeight, const BlockHash &previousBlock, const Hash256 &miningTarget, uint64_t coinbaseCoins);
 };
 
 #include <memory>

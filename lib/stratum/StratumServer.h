@@ -5,11 +5,13 @@
 
 #include <socket/ConnectionManager.h>
 #include <mining/CoinbaseOutputs.h>
+#include <mining/RawTransactions.h>
 #include <mining/MerkleBranch.h>
 #include <mining/CoinbaseTransaction.h>
 #include <interfaces/plugins/HashPlugin.h>
 
 #include "NetworkState.h"
+#include "BlockSubmitter.h"
 
 class StratumJob;
 class StratumClientConnection;
@@ -26,7 +28,7 @@ class StratumServer : public ConnectionManager
 
         const int extraNonce2Size;
 
-        StratumServer(Listener &&listener, const NetworkStateInitializer &initializer, const HashPluginRef hasher, const std::string &coinbaseId);
+        StratumServer(Listener &&listener, const NetworkStateInitializer &initializer, BlockSubmitterRef &&blockSubmitter, const HashPluginRef hasher, const std::string &coinbaseId, double defaultDiff = 1.0);
 
         std::unique_ptr<StratumJob> createJob(StratumClientConnection *client);
 
@@ -35,21 +37,26 @@ class StratumServer : public ConnectionManager
         void updateCoinbaseOutputs(CoinbaseOutputs &&newOutputs);
         void updateMempool();
 
+        inline BlockSubmitter &blockSubmitter(void) { return *_blockSubmitter; }
+
     private:
         Listener _listener;
         Lock _jobGeneratorLock;
 
         HashPluginRef hasher;
+        BlockSubmitterRef _blockSubmitter;
 
         ByteString coinbaseId;
 
         NetworkStateRef state;
+        RawTransactionsRef transactionsToInclude;
         MerkleBranchRef merkleBranch;
         AbstractCoinbaseOutputRef witnessCommitment;
 
         CoinbaseOutputs coinbaseOutputs;
         CoinbaseTransactionRef coinbase;
 
+        double defaultDiff;
         uint32_t jobCounter;
 
         void updateWork(bool forceClientUpdates = false);

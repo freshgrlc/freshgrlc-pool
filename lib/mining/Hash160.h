@@ -13,7 +13,8 @@ class Hash160 : public Hash<uint160_t>
         Hash160(const ByteString &src);
         Hash160(const ConstByteStringRef &src);
 
-        inline bool operator<(const Hash160 &them) const;
+        bool operator<(const Hash160 &them) const;
+        bool operator<=(const Hash160 &them) const;
 
         static Hash160 zero(void);
 

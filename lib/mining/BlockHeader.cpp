@@ -37,7 +37,14 @@ BlockHeader::BlockHeader(const ConstByteStringRef &raw)
     memcpy(&this->raw, raw.data, sizeof(this->raw));
 }
 
-BlockHash BlockHeader::hash(const HashPluginRef &hasher)
+BlockHash BlockHeader::hash(const HashPluginRef &hasher) const
 {
-    return hasher->hash(ConstByteStringRef((const uint8_t *) &this->raw, sizeof(this->raw)));
+    Hash256 reversedHash = hasher->hash(ConstByteStringRef((const uint8_t *) &this->raw, sizeof(this->raw)));
+    return (Hash256) ByteString(reversedHash.bytes()).reverse();
 }
+
+BlockHeader::operator const ByteString() const
+{
+    return ConstByteStringRef((uint8_t *) &this->raw, sizeof(this->raw));
+}
+

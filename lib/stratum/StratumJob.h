@@ -6,6 +6,7 @@
 
 #include <mining/CoinbaseTransaction.h>
 #include <mining/MerkleBranch.h>
+#include <mining/RawTransactions.h>
 #include <interfaces/plugins/HashPlugin.h>
 
 #include "NetworkState.h"
@@ -20,6 +21,8 @@ namespace nlohmann {
 using json = nlohmann::json;
 
 
+class BlockSubmitter;
+
 class StratumJob
 {
     public:
@@ -29,12 +32,12 @@ class StratumJob
                 using runtime_error::runtime_error;
         };
 
-        StratumJob(uint32_t id, double diff, const NetworkStateRef &networkState, const CoinbaseTransactionRef &coinbase, const MerkleBranchRef &merkleBranch, HashPluginRef hasher);
+        StratumJob(uint32_t id, double diff, const NetworkStateRef &networkState, const CoinbaseTransactionRef &coinbase, const RawTransactionsRef &transactions, const MerkleBranchRef &merkleBranch, HashPluginRef hasher);
         StratumJob(const StratumJob &them);
 
         json toJson(bool force) const;
 
-        void checkSolution(uint32_t time, uint32_t nonce, CoinbaseTransaction::nonce1_t extraNonce1, CoinbaseTransaction::nonce2_t extraNonce2);
+        bool checkSolution(uint32_t time, uint32_t nonce, CoinbaseTransaction::nonce1_t extraNonce1, CoinbaseTransaction::nonce2_t extraNonce2, BlockSubmitter &blockSubmitter);
 
         inline uint32_t id(void) const              { return _id; }
         inline double diff(void) const              { return _diff; }
@@ -47,6 +50,7 @@ class StratumJob
 
         NetworkStateRef networkState;
         CoinbaseTransactionRef coinbase;
+        RawTransactionsRef transactions;
         MerkleBranchRef merkleBranch;
 
         HashPluginRef hasher;

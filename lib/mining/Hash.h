@@ -20,6 +20,7 @@ template <class hash_t> class Hash
         Hash(const ConstByteStringRef &src, size_t s = sizeof(hash_t));
 
         bool isLower(const Hash &them, size_t s = sizeof(hash_t)) const;
+        bool isLower(const Hash &them, bool orEqual, size_t s = sizeof(hash_t)) const;
 };
 
 #endif

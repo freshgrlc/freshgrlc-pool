@@ -1,5 +1,6 @@
 #include <bitcoinrpc/RPCConnection.h>
 #include <stratum/StratumServer.h>
+#include <stratum/BlockSubmitter.h>
 #include <mining/CoinbaseOutput.h>
 #include <mining/hashplugin.h>
 
@@ -23,6 +24,21 @@ class StratumInitializer : public StratumServer::NetworkStateInitializer
         RPCConnection &rpc;
 };
 
+class RPCBlockSubmitter : public BlockSubmitter
+{
+    public:
+        inline RPCBlockSubmitter(RPCConnection &rpc) : rpc(rpc) {}
+        inline ~RPCBlockSubmitter(void) override {}
+
+        inline void submitBlock(const BlockHeader &header, const ByteString &coinbaseTransaction, RawTransactionsRef otherTransactions) override
+        {
+            this->rpc.submitBlock(header, coinbaseTransaction, *otherTransactions);
+        }
+
+    private:
+        RPCConnection &rpc;
+};
+
 NetworkStateRef StratumInitializer::getNetworkState() const
 {
     auto blockTemplate = this->rpc.getBlockTemplate();
@@ -33,6 +49,7 @@ NetworkStateRef StratumInitializer::getNetworkState() const
         blockTemplate.notBefore,
         blockTemplate.height,
         blockTemplate.previousBlockHash,
+        blockTemplate.miningTarget,
         blockTemplate.coinbaseCoins
     );
 }
@@ -69,7 +86,7 @@ int main(int argc, char *argv[])
     try
     {
         RPCConnection rpc(rpcUsername, rpcPassword, rpcHostname, rpcPort);
-        StratumServer server(Listener(stratumPort), StratumInitializer(rpc), get_hashplugin(miningAlgorithm), coinbaseSignature);
+        StratumServer server(Listener(stratumPort), StratumInitializer(rpc), std::make_unique<RPCBlockSubmitter>(rpc), get_hashplugin(miningAlgorithm), coinbaseSignature, 0.05);
 
         return server.listen();
     }

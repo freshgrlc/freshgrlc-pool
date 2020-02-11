@@ -1,5 +1,8 @@
 #include <nlohmann/json.hpp>
 
+#include <mining/VarInt.h>
+#include <mining/hashplugin.h>
+
 #include "RPCConnection.h"
 #include "RPCSocket.h"
 
@@ -57,11 +60,11 @@ BlockTemplate RPCConnection::getBlockTemplate()
         throw std::runtime_error("getblocktemplate RPC failure");
 
     auto &response = *_response;
-    BlockTemplate::Transactions transactions;
+    RawTransactions transactions;
 
     for (auto &tx : response["transactions"])
     {
-        BlockTemplate::TransactionInfo txInfo(
+        RawTransaction txInfo(
             ByteString::fromHex(tx["txid"].get<std::string>()),
             ByteString::fromHex(tx["data"].get<std::string>())
         );
@@ -118,6 +121,27 @@ std::vector<ByteString> RPCConnection::getTransactionsInBlock(const ConstByteStr
         retval.push_back(ByteString::fromHex(tx.get<std::string>()).reverse());
 
     return retval;
+}
+
+void RPCConnection::submitBlock(const BlockHeader &header, const ByteString &coinbaseTransaction, const RawTransactions &transactions)
+{
+    static HashPluginRef hasher = get_hashplugin("sha256d");
+
+    /* Serialize block */
+    ByteString block;
+
+    block += header;
+    block += VarInt(1 + transactions.size());
+    block += coinbaseTransaction;
+
+    /* Since we add in the coinbase we cannot use single step serialization */
+    for (auto &tx : transactions)
+        block += tx;
+
+    auto result = this->sendAndReceivePayload("submitblock", { block.asHex() });
+
+    mlog(INFO, "Submitted block %s to daemon", header.hash(hasher).bytes().asHex().c_str());
+    mlog(DEBUG, "Daemon response: %s", result->dump().c_str());
 }
 
 bool RPCConnection::connectIfNotConnected()

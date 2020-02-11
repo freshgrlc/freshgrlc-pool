@@ -4,6 +4,7 @@
 #include <string>
 #include <memory>
 
+#include <mining/BlockHeader.h>
 #include <util/ByteString.h>
 
 #include "RPCSocket.h"
@@ -34,6 +35,8 @@ class RPCConnection
 
         ByteString getBlock(const ConstByteStringRef &blockhash);
         std::vector<ByteString> getTransactionsInBlock(const ConstByteStringRef &blockhash);
+
+        void submitBlock(const BlockHeader &header, const ByteString &coinbaseTransaction, const RawTransactions &transactions);
 
     private:
         const std::string _host;

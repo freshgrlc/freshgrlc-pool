@@ -4,6 +4,8 @@
 
 #include <stratum/StratumClientConnection.h>
 #include <stratum/StratumJob.h>
+#include <stratum/StratumServer.h>
+
 
 using namespace stratum::messages;
 
@@ -30,7 +32,7 @@ void MiningSubmit::process(StratumClientConnection &connection)
 
     try
     {
-        job->checkSolution(this->blockHeaderTime, this->blockHeaderNonce, connection.extraNonce1(), this->extraNonce2);
+        job->checkSolution(this->blockHeaderTime, this->blockHeaderNonce, connection.extraNonce1(), this->extraNonce2, connection.server().blockSubmitter());
         connection.sendReply(*this, true);
     }
     catch (const StratumJob::validation_error &e)

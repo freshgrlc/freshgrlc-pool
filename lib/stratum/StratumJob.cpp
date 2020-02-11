@@ -7,6 +7,7 @@
 #include <util/logger.h>
 
 #include "StratumJob.h"
+#include "BlockSubmitter.h"
 
 #include <ctime>
 
@@ -22,11 +23,12 @@ static std::string int2hex(int_t i, bool littleEndian = false)
     return encoded.reverse().asHex();
 }
 
-StratumJob::StratumJob(uint32_t id, double diff, const NetworkStateRef &networkState, const CoinbaseTransactionRef &coinbase, const MerkleBranchRef &merkleBranch, HashPluginRef hasher) :
+StratumJob::StratumJob(uint32_t id, double diff, const NetworkStateRef &networkState, const CoinbaseTransactionRef &coinbase, const RawTransactionsRef &transactions, const MerkleBranchRef &merkleBranch, HashPluginRef hasher) :
     _id(id),
     _diff(diff),
     networkState(networkState),
     coinbase(coinbase),
+    transactions(transactions),
     merkleBranch(merkleBranch),
     hasher(hasher)
 {
@@ -42,6 +44,7 @@ StratumJob::StratumJob(const StratumJob &them) :
     _creationTime(them._creationTime),
     networkState(them.networkState),
     coinbase(them.coinbase),
+    transactions(them.transactions),
     merkleBranch(them.merkleBranch),
     hasher(them.hasher)
 {
@@ -76,7 +79,7 @@ json StratumJob::toJson(bool force) const
     });
 }
 
-void StratumJob::checkSolution(uint32_t time, uint32_t nonce, CoinbaseTransaction::nonce1_t extraNonce1, CoinbaseTransaction::nonce2_t extraNonce2)
+bool StratumJob::checkSolution(uint32_t time, uint32_t nonce, CoinbaseTransaction::nonce1_t extraNonce1, CoinbaseTransaction::nonce2_t extraNonce2, BlockSubmitter &blockSubmitter)
 {
     static const HashPluginRef sha256dHasher = get_hashplugin("sha256d");
 
@@ -89,7 +92,20 @@ void StratumJob::checkSolution(uint32_t time, uint32_t nonce, CoinbaseTransactio
 
     Hash256 coinbaseTxId = sha256dHasher->hash(rawCoinbaseTx);
     MerkleRoot merkleRoot = this->merkleBranch->getRoot(coinbaseTxId);
-    BlockHash hash = BlockHeader(this->networkState->version, this->networkState->previousBlock, merkleRoot, time, this->networkState->bits, nonce).hash(this->hasher);
+    BlockHeader header(this->networkState->version, this->networkState->previousBlock, merkleRoot, time, this->networkState->bits, nonce);
+    BlockHash hash = header.hash(this->hasher);
 
-    mlog(DEBUG, "Received solution from miner: time %08x, nonce %08x, extraNonce2 %08x, share %s", time, nonce, extraNonce2, ByteString(hash.bytes()).reverse().asHex().c_str());
+    mlog(DEBUG, "Received solution from miner: time %08x, nonce %08x, extraNonce2 %08x, share %s", time, nonce, extraNonce2, hash.bytes().asHex().c_str());
+
+    bool submit = hash <= this->networkState->miningTarget;
+
+    /* Async */
+    if (submit)
+        blockSubmitter.submitBlock(header, rawCoinbaseTx, this->transactions);
+
+#ifdef SHARE_TARGET_DEBUG
+    mlog(DEBUG, "Share  %s %s below", hash.bytes().asHex().c_str(), submit ? "WAS" : "was not");
+    mlog(DEBUG, "target %s%s", this->networkState->miningTarget.bytes().asHex().c_str(), submit ? ", SUBMITTED!" : "");
+#endif
+    return submit;
 }
