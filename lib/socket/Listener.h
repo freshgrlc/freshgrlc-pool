@@ -18,6 +18,8 @@ class Listener : public SocketBase
         int listen(IncomingConnectionHandler handler, void *context = 0);
         int listen(ConnectionManager &connectionManager);
 
+        inline int port(void) const { return _port; }
+
     private:
         int _port;
         bool _ipv6;

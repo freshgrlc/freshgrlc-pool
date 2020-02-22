@@ -57,6 +57,7 @@ int ConnectionManager::listen()
             return result;
     }
 
+    mlog(INFO, "Opened listener on port %d", _listener.port());
     return _listener.listen(ConnectionManager::addConnection, this);
 }
 

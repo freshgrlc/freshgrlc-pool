@@ -1,11 +1,10 @@
 #include "Thread.h"
 
+#define MODULE  threading
 #include "logger.h"
 
 #include <stdexcept>
 
-
-#define MODULE  threading
 
 
 Thread::Thread() :
@@ -35,7 +34,7 @@ Thread::~Thread()
 {
     if (this->state() != Terminating)
     {
-        mlog(DEBUG, "Force-terminating thread");
+        mlog(INFO, "Force-terminating thread");
         pthread_cancel(_thread);
 
         if (this->state() == WaitingToStart)

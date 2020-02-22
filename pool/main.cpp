@@ -24,9 +24,16 @@ class StratumInitializer : public DaemonConnector::StratumInitializer
         }
 };
 
+extern enum LogLevel __loglevel_mining;
+extern enum LogLevel __loglevel_bitcoinrpc;
+extern enum LogLevel __loglevel_stratum;
+
 int main(int argc, char *argv[])
 {
     __loglevel = DEBUG;
+    __loglevel_mining = DEBUG;
+    __loglevel_bitcoinrpc = DEBUG;
+    __loglevel_stratum = DEBUG;
 
     std::string rpcHostname = "127.0.0.1";
     std::string rpcUsername;
