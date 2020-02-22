@@ -18,7 +18,7 @@ class StratumInitializer : public StratumServer::NetworkStateInitializer
         inline StratumInitializer(RPCConnection &rpc) : rpc(rpc) {}
 
         NetworkStateRef getNetworkState() const override;
-        void populateCoinbaseOutputs(CoinbaseOutputs outputs) const override;
+        void populateCoinbaseOutputs(CoinbaseOutputs &outputs) const override;
 
     private:
         RPCConnection &rpc;
@@ -54,7 +54,7 @@ NetworkStateRef StratumInitializer::getNetworkState() const
     );
 }
 
-void StratumInitializer::populateCoinbaseOutputs(CoinbaseOutputs outputs) const
+void StratumInitializer::populateCoinbaseOutputs(CoinbaseOutputs &outputs) const
 {
     outputs.push_back(std::make_shared<CoinbaseOutput>(CoinbaseOutput::p2pkh(ByteString::fromHex(MINE_ADDRESS), 1)));
 }

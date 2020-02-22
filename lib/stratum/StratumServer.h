@@ -23,7 +23,7 @@ class StratumServer : public ConnectionManager
         {
             public:
                 virtual NetworkStateRef getNetworkState(void) const = 0;
-                virtual void populateCoinbaseOutputs(CoinbaseOutputs outputs) const = 0;
+                virtual void populateCoinbaseOutputs(CoinbaseOutputs &outputs) const = 0;
         };
 
         const int extraNonce2Size;
