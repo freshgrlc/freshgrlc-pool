@@ -1,63 +1,28 @@
-#include <bitcoinrpc/RPCConnection.h>
-#include <stratum/StratumServer.h>
-#include <stratum/BlockSubmitter.h>
+#include "DaemonConnector.h"
+#include "StratumConfiguration.h"
+#include "Pool.h"
+
+#include <iostream>
+#include <unistd.h>
+
 #include <mining/CoinbaseOutput.h>
-#include <mining/hashplugin.h>
 
 #include <util/CommandLineArguments.h>
 #include <util/logger.h>
 
-#include <iostream>
-
 
 #define MINE_ADDRESS    "faf51e196d9190efb9892a55533c89e71c37b6c0"
 
-class StratumInitializer : public StratumServer::NetworkStateInitializer
+class StratumInitializer : public DaemonConnector::StratumInitializer
 {
     public:
-        inline StratumInitializer(RPCConnection &rpc) : rpc(rpc) {}
+        using DaemonConnector::StratumInitializer::StratumInitializer;
 
-        NetworkStateRef getNetworkState() const override;
-        void populateCoinbaseOutputs(CoinbaseOutputs &outputs) const override;
-
-    private:
-        RPCConnection &rpc;
-};
-
-class RPCBlockSubmitter : public BlockSubmitter
-{
-    public:
-        inline RPCBlockSubmitter(RPCConnection &rpc) : rpc(rpc) {}
-        inline ~RPCBlockSubmitter(void) override {}
-
-        inline void submitBlock(const BlockHeader &header, const ByteString &coinbaseTransaction, RawTransactionsRef otherTransactions) override
+        inline void populateCoinbaseOutputs(CoinbaseOutputs &outputs) const override
         {
-            this->rpc.submitBlock(header, coinbaseTransaction, *otherTransactions);
+            outputs.push_back(std::make_shared<CoinbaseOutput>(CoinbaseOutput::p2pkh(ByteString::fromHex(MINE_ADDRESS), 1)));
         }
-
-    private:
-        RPCConnection &rpc;
 };
-
-NetworkStateRef StratumInitializer::getNetworkState() const
-{
-    auto blockTemplate = this->rpc.getBlockTemplate();
-
-    return std::make_shared<NetworkState>(
-        blockTemplate.version,
-        blockTemplate.miningTargetBits,
-        blockTemplate.notBefore,
-        blockTemplate.height,
-        blockTemplate.previousBlockHash,
-        blockTemplate.miningTarget,
-        blockTemplate.coinbaseCoins
-    );
-}
-
-void StratumInitializer::populateCoinbaseOutputs(CoinbaseOutputs &outputs) const
-{
-    outputs.push_back(std::make_shared<CoinbaseOutput>(CoinbaseOutput::p2pkh(ByteString::fromHex(MINE_ADDRESS), 1)));
-}
 
 int main(int argc, char *argv[])
 {
@@ -85,10 +50,11 @@ int main(int argc, char *argv[])
 
     try
     {
-        RPCConnection rpc(rpcUsername, rpcPassword, rpcHostname, rpcPort);
-        StratumServer server(Listener(stratumPort), StratumInitializer(rpc), std::make_unique<RPCBlockSubmitter>(rpc), get_hashplugin(miningAlgorithm), coinbaseSignature, 0.05);
+        StratumConfiguration configuration(stratumPort, miningAlgorithm, coinbaseSignature, 0.05);
+        DaemonConnectorRef daemon = std::make_shared<DaemonConnector>(rpcUsername, rpcPassword, rpcHostname, rpcPort);
+        Pool pool(daemon, StratumInitializer(*daemon), configuration);
 
-        return server.listen();
+        for (;;) pause();
     }
     catch (const std::runtime_error &e)
     {

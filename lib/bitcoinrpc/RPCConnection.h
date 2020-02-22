@@ -28,7 +28,7 @@ using json = nlohmann::json;
 class RPCConnection
 {
     public:
-        RPCConnection(const std::string &username, const std::string &password, const std::string &host, int port = 42068);
+        RPCConnection(const std::string &username, const std::string &password, const std::string &host, int port);
 
         BlockChainInfo getBlockChainInfo(void);
         BlockTemplate getBlockTemplate(void);
