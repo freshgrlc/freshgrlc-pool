@@ -10,6 +10,7 @@ Pool::Pool(DaemonConnectorRef &daemon, const DaemonConnector::StratumInitializer
     stratum(Listener(configuration.port), stratumInitializer, daemon->blockSubmitter(), get_hashplugin(configuration.hashingAlgorithm), configuration.coinbaseSignature, configuration.initialDifficulty),
     stratumListener(this->stratum)
 {
+    this->stratumListener.start();
 }
 
 void Pool::StratumListener::main()
