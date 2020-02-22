@@ -138,6 +138,10 @@ void RPCConnection::submitBlock(const BlockHeader &header, const ByteString &coi
     for (auto &tx : transactions)
         block += tx;
 
+#ifdef BLOCK_SUBMIT_DEBUG
+    log(DEBUG, "Submitting block: %s", block.asHex().c_str());
+#endif
+
     auto result = this->sendAndReceivePayload("submitblock", { block.asHex() });
 
     mlog(INFO, "Submitted block %s to daemon", header.hash(hasher).bytes().asHex().c_str());
