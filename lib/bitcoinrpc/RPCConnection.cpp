@@ -143,9 +143,12 @@ void RPCConnection::submitBlock(const BlockHeader &header, const ByteString &coi
 #endif
 
     auto result = this->sendAndReceivePayload("submitblock", { block.asHex() });
+    std::string blockhash = header.hash(hasher).bytes().asHex();
 
-    mlog(INFO, "Submitted block %s to daemon", header.hash(hasher).bytes().asHex().c_str());
-    mlog(DEBUG, "Daemon response: %s", result->dump().c_str());
+    if (!result)
+        mlog(INFO, "Successfully submitted block %s to daemon", blockhash.c_str());
+    else
+        mlog(ERROR, "Failed to submit block %s to daemon: %s", blockhash.c_str(), result->dump().c_str());
 }
 
 bool RPCConnection::connectIfNotConnected()
