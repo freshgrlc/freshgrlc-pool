@@ -79,6 +79,6 @@ void *Thread::entrypoint(void *context)
 
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &dummy);
 
-    ((Thread *) context)->main();
+    ((Thread *) context)->entrypoint();
     return NULL;
 }
