@@ -2,6 +2,9 @@
 
 #include "logger.h"
 
+#include <stdexcept>
+
+
 #define MODULE  threading
 
 
@@ -47,6 +50,12 @@ void Thread::start()
         _state = Running;
         _thread_run_lock.releaseUnmanaged();
     }
+}
+
+void Thread::initializationCallback(int errorCode)
+{
+    if (errorCode)
+        throw std::runtime_error("Failed to initialize critical thread");
 }
 
 void Thread::entrypoint()

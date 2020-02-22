@@ -28,8 +28,8 @@ class Thread
 
     protected:
         virtual void main(void) = 0;
+        virtual void initializationCallback(int errorCode = 0);
 
-        inline virtual void initializationCallback(int errorCode = 0) {}
         inline virtual void cleanupCallback(void) {}
 
     private:
