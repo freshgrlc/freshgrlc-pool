@@ -1,19 +1,7 @@
 #include "BlockHeader.h"
 
-static uint32_t readBE(uint8_t int32[4])
-{
-    return (int32[0] << 24) | (int32[1] << 16) | (int32[2] << 8) | int32[3];
-}
+#include "swap32.h"
 
-static uint32_t swap32(uint32_t x)
-{
-    return readBE((uint8_t *) &x);
-}
-
-static void swap32(uint8_t int32[4])
-{
-    *((uint32_t *) int32) = readBE(int32);
-}
 
 BlockHeader::BlockHeader(uint32_t versionBits, const Hash256 &parentBlockhash, const Hash256 &merkleRoot, uint32_t time, uint32_t difficultyBits, uint32_t nonce)
 {
