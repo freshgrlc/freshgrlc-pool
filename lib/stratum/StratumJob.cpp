@@ -3,6 +3,7 @@
 #include <mining/hashplugin.h>
 #include <mining/MerkleBranch.h>
 #include <mining/BlockHeader.h>
+#include <mining/swap32.h>
 
 #include <util/logger.h>
 
@@ -66,9 +67,13 @@ json StratumJob::toJson(bool force) const
      *  ]
      */
 
+    uint256_t previousBlockHash;
+    memcpy(&previousBlockHash, &this->networkState->previousBlock.raw, sizeof(previousBlockHash));
+    swap32_256(previousBlockHash);
+
     return json::array({
         int2hex(this->id()),
-        ByteString(this->networkState->previousBlock.bytes()).reverse().asHex(),
+        Hash256(previousBlockHash).bytes().asHex(),
         this->coinbase->part1().asHex(),
         this->coinbase->part2().asHex(),
         this->merkleBranch->asHexArray(),

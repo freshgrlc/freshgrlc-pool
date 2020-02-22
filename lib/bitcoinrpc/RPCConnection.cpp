@@ -75,7 +75,7 @@ BlockTemplate RPCConnection::getBlockTemplate()
     return BlockTemplate(
         response["version"].get<uint32_t>(),
         response["height"].get<uint32_t>(),
-        ByteString::fromHex(response["previousblockhash"].get<std::string>()),
+        ByteString::fromHex(response["previousblockhash"].get<std::string>()).reverse(),
         std::move(transactions),
         ByteString::fromHex(response["default_witness_commitment"].get<std::string>()),
         response["coinbasevalue"].get<uint64_t>(),
