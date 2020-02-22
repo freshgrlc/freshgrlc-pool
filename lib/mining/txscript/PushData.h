@@ -12,7 +12,7 @@ class PushData : public Op
         PushData(uint64_t integer);
         PushData(const ConstByteStringRef &data);
 
-        ByteString raw() override;
+        ByteString raw() const override;
 
     private:
         ByteString data;

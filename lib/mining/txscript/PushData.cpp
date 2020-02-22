@@ -30,7 +30,7 @@ PushData::PushData(const ConstByteStringRef &data) : data(data)
 {
 }
 
-ByteString script::PushData::raw()
+ByteString PushData::raw() const
 {
     ByteString raw;
 

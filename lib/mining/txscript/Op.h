@@ -57,9 +57,9 @@ enum OP_CODES
 class Op
 {
     public:
-        virtual ByteString raw(void) = 0;
+        virtual ByteString raw(void) const = 0;
 
-        inline operator const ByteString(void) { return this->raw(); }
+        inline operator const ByteString(void) const { return this->raw(); }
 };
 
 };
