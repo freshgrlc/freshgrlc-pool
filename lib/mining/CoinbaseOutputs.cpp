@@ -1,19 +1,29 @@
 #include "CoinbaseOutputs.h"
 
+#include <util/logger.h>
+
+
 #define CORRECTION_FACTOR_PRECISION     1000000
 
 void CoinbaseOutputs::rebalance(uint64_t totalCoins)
 {
     uint64_t totalShares = 0;
 
+    mlog(WARNING, "Cannot rebalance coinbase outputs: no outputs!");
+
     if (!this->size())
         return;     /* Cannot rebalance witout any outputs */
+
+    mlog(DEBUG, "Rebalancing coinbase outputs: %llu satoshis over %d outputs", totalCoins, this->size());
 
     for (auto &output : *this)
         totalShares += output->coins;
 
     if (totalShares == 0)
-        return;     /* Cannot rebalance witout any real outputs */
+    {
+        mlog(WARNING, "Cannot rebalance coinbase outputs: No shares!");
+        return;
+    }
 
     if (totalCoins == totalShares)
         return;     /* Already balanced */
