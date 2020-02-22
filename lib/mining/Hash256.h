@@ -13,8 +13,11 @@ class Hash256 : public Hash<uint256_t>
         Hash256(const ByteString &src);
         Hash256(const ConstByteStringRef &src);
 
+        bool operator==(const Hash256 &them) const;
         bool operator<(const Hash256 &them) const;
         bool operator<=(const Hash256 &them) const;
+
+        Hash256 &operator=(const Hash256 &src);
 
         static Hash256 zero(void);
 

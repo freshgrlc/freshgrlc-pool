@@ -10,8 +10,8 @@ BlockHeader::BlockHeader(uint32_t versionBits, const Hash256 &parentBlockhash, c
     this->raw.difficultyBits = swap32(difficultyBits);
     this->raw.nonce = nonce;
 
-    memcpy(&this->raw.parentBlockHash, &parentBlockhash.raw, sizeof(this->raw.parentBlockHash));
-    memcpy(&this->raw.merkleRootHash, &merkleRoot.raw, sizeof(this->raw.merkleRootHash));
+    memcpy(&this->raw.parentBlockHash, &parentBlockhash.raw(), sizeof(this->raw.parentBlockHash));
+    memcpy(&this->raw.merkleRootHash, &merkleRoot.raw(), sizeof(this->raw.merkleRootHash));
 }
 
 BlockHeader::BlockHeader(const ConstByteStringRef &raw)

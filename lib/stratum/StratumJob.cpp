@@ -68,7 +68,7 @@ json StratumJob::toJson(bool force) const
      */
 
     uint256_t previousBlockHash;
-    memcpy(&previousBlockHash, &this->networkState->previousBlock.raw, sizeof(previousBlockHash));
+    memcpy(&previousBlockHash, &this->networkState->previousBlock.raw(), sizeof(previousBlockHash));
     swap32_256(previousBlockHash);
 
     return json::array({
