@@ -18,8 +18,9 @@ class Script : public ByteString
 
         inline ByteString &operator+=(OP_CODES op)                      { return *this += (uint8_t) op; }
 
-        inline ByteString &operator+=(const ByteString &data)           { return this->ByteString::operator+=(PushData(data)); }
-        inline ByteString &operator+=(const ConstByteStringRef &data)   { return this->ByteString::operator+=(PushData(data)); }
+        inline ByteString &operator+=(const PushData &data)             { return this->ByteString::operator+=(data); }
+        inline ByteString &operator+=(const ByteString &data)           { return this->operator+=(PushData(data)); }
+        inline ByteString &operator+=(const ConstByteStringRef &data)   { return this->operator+=(PushData(data)); }
 
         template <class op_type>
         inline Script &operator<<(op_type data)                         { return *((Script *) &(*this += data)); }
