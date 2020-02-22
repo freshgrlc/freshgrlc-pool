@@ -3,13 +3,13 @@
 
 #include <memory>
 #include <vector>
-#include <pthread.h>
 
 #include "Listener.h"
 #include "Socket.h"
 #include "Packet.h"
 
 #include <Lock.h>
+#include <Thread.h>
 
 
 class ConnectionManager
@@ -20,37 +20,21 @@ class ConnectionManager
             public:
                 Connection(ConnectionManager &manager, SocketBase &&socket);
 
-                inline void enableProcessing(void)  { this->receiver.run(); }
+                inline void enableProcessing(void)  { this->receiver.start(); }
                 inline bool dangling(void)          { return _dangling; }
 
             private:
-                class ReceiverThread
+                class ReceiverThread : public Thread
                 {
                     public:
-                        enum State
-                        {
-                            FailedToStart,
-                            WaitingToStart,
-                            Running,
-                            Stopped,
-                            Terminating
-                        };
-
-                        ReceiverThread(Connection *parent);
-                        virtual ~ReceiverThread(void);
-
-                        void run(void);
-
-                        inline State state(void)    { return _state; }
+                        inline ReceiverThread(Connection *parent) : Thread(), parent(*parent) {}
 
                     private:
                         Connection &parent;
-                        pthread_t _thread;
-                        Lock _thread_run_lock;
-                        State _state;
 
-                        void receiver(void);
-                        static void *entrypoint(void *context);
+                        void main(void) override;
+                        void initializationCallback(int error) override;
+                        void cleanupCallback(void) override;
                 };
 
                 ReceiverThread receiver;

@@ -78,73 +78,20 @@ void ConnectionManager::Connection::cleanup()
     this->_manager.remove(*this);
 }
 
-ConnectionManager::Connection::ReceiverThread::ReceiverThread(Connection *parent) :
-    parent(*parent),
-    _state(FailedToStart)
+void ConnectionManager::Connection::ReceiverThread::main()
 {
-    int result;
-
-    _thread_run_lock.aquireUnmanaged();
-
-    result = pthread_create(&_thread, NULL, entrypoint, this);
-
-    if (result)
-    {
-        mlog(WARNING, "Failed to spawn connection thread (error %d), this will result in a dangling Connection object", result);
-        _thread_run_lock.releaseUnmanaged();
-    }
-    else
-    {
-        mlog(DEBUG, "Spawned thread %p for connection %p", (void *) _thread, &this->parent);
-        _state = WaitingToStart;
-
-        pthread_detach(_thread);
-    }
-}
-
-ConnectionManager::Connection::ReceiverThread::~ReceiverThread()
-{
-    if (this->state() != Terminating)
-    {
-        mlog(DEBUG, "Terminating receiver thread");
-        pthread_cancel(_thread);
-
-        if (this->state() == WaitingToStart)
-            this->run();
-    }
-}
-
-void ConnectionManager::Connection::ReceiverThread::run()
-{
-    if (this->state() == WaitingToStart)
-    {
-        _state = Running;
-        _thread_run_lock.releaseUnmanaged();
-    }
-}
-
-void ConnectionManager::Connection::ReceiverThread::receiver()
-{
-    int dummy;
-
-    OBTAIN_LOCK(_thread_run_lock);
-
     this->parent.receive();
+}
 
-    _state = State::Terminating;
+void ConnectionManager::Connection::ReceiverThread::initializationCallback(int error)
+{
+    if (!error)
+        mlog(DEBUG, "Spawned thread %p for connection %p", this->threadId(), &this->parent);
+    else
+        mlog(WARNING, "Failed to spawn connection thread (error %d), this will result in a dangling Connection object", error);
+}
 
-    /* Don't allow thread cancellation mid-cleanup */
-    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &dummy);
+void ConnectionManager::Connection::ReceiverThread::cleanupCallback()
+{
     this->parent.cleanup();
 }
-
-void *ConnectionManager::Connection::ReceiverThread::entrypoint(void *context)
-{
-    int dummy;
-
-    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &dummy);
-
-    ((ConnectionManager::Connection::ReceiverThread *) context)->receiver();
-    return NULL;
-}
-
