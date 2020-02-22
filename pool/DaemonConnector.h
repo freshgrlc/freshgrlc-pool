@@ -7,6 +7,8 @@
 #include <stratum/StratumServer.h>
 #include <stratum/BlockSubmitter.h>
 
+#include "BlockTemplatePoller.h"
+
 
 class DaemonConnector : public RPCConnection
 {
@@ -42,17 +44,29 @@ class DaemonConnector : public RPCConnection
 
         typedef std::unique_ptr<BlockSubmitter> BlockSubmitterRef;
 
-        using RPCConnection::RPCConnection;
+
+        DaemonConnector(const std::string &username, const std::string &password, const std::string &host, int port);
 
         NetworkStateRef getNetworkState(void);
+        void updateStratumServers(const NetworkStateRef &newNetworkState);
 
         inline BlockSubmitterRef blockSubmitter(void)
         {
             return std::make_unique<BlockSubmitter>(*this);
         }
 
+        inline void registerServer(StratumServer &stratumServer)
+        {
+            this->servers.push_back(&stratumServer);
+        }
+
     private:
+        BlockTemplatePoller poller;
+        std::vector<StratumServer *> servers;
+
         NetworkStateRef getNetworkState(const BlockTemplate &rpcBlockTemplate) const;
+
+        friend class BlockTemplatePoller;
 };
 
 typedef std::shared_ptr<DaemonConnector> DaemonConnectorRef;

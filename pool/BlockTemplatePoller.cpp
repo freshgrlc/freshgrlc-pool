@@ -1,11 +1,14 @@
 #include "BlockTemplatePoller.h"
+#include "DaemonConnector.h"
 
 #include <unistd.h>
+
+#define ONE_SECOND  1000000
 
 
 void BlockTemplatePoller::main()
 {
-    for (;; usleep(1 * 10000000))
+    for (;; usleep(ONE_SECOND))
         this->poll();
 }
 
@@ -53,5 +56,5 @@ void BlockTemplatePoller::poll()
 
 void BlockTemplatePoller::updateNetworkState(const BlockTemplate &blockTemplate)
 {
-
+    this->parent.updateStratumServers(this->parent.getNetworkState(blockTemplate));
 }

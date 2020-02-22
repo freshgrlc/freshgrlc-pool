@@ -1,5 +1,11 @@
 #include "DaemonConnector.h"
 
+DaemonConnector::DaemonConnector(const std::string &username, const std::string &password, const std::string &host, int port) : RPCConnection(username, password, host, port),
+    poller(*this)
+{
+    this->poller.start();
+}
+
 NetworkStateRef DaemonConnector::getNetworkState()
 {
     return this->getNetworkState(this->getBlockTemplate());
@@ -18,4 +24,8 @@ NetworkStateRef DaemonConnector::getNetworkState(const BlockTemplate &rpcBlockTe
     );
 }
 
-
+void DaemonConnector::updateStratumServers(const NetworkStateRef &newNetworkState)
+{
+    for (auto server : this->servers)
+        server->updateNetworkState(newNetworkState);
+}

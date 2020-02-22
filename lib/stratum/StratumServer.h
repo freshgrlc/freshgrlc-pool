@@ -32,10 +32,10 @@ class StratumServer : public ConnectionManager
 
         std::unique_ptr<StratumJob> createJob(StratumClientConnection *client);
 
-        void updateNetworkState(const NetworkState &state);
+        void updateNetworkState(const NetworkStateRef &state);
+
         void updateCoinbaseOutputs(const CoinbaseOutputs &newOutputs);
         void updateCoinbaseOutputs(CoinbaseOutputs &&newOutputs);
-        void updateMempool();
 
         inline BlockSubmitter &blockSubmitter(void) { return *_blockSubmitter; }
 
@@ -60,9 +60,9 @@ class StratumServer : public ConnectionManager
         uint32_t jobCounter;
 
         void updateWork(bool forceClientUpdates = false);
-        void regenerateCoinbaseTransaction(void);
-        void _regenerateCoinbaseTransaction(void);
         void sendNewJobsToClients(bool forceUpdate);
+
+        void _regenerateCoinbaseTransaction(void);
 
         virtual std::unique_ptr<Connection> makeConnection(SocketBase &&socket, ConnectionManager &manager) override;
 };

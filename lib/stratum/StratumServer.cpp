@@ -16,18 +16,13 @@ StratumServer::StratumServer(Listener &&listener, const NetworkStateInitializer 
     defaultDiff(defaultDiff),
     jobCounter(0)
 {
-    /* Initialize server */
-    OBTAIN_LOCK(_jobGeneratorLock);
+    /* Reserve space for witnessCommitment */
+    this->coinbaseOutputs.resize(1);
 
-    this->state = initializer.getNetworkState();
-    this->witnessCommitment = std::make_shared<CoinbaseWitnessCommitment>(CoinbaseWitnessCommitment::forCoinbaseOnly());
-    this->merkleBranch = std::make_shared<MerkleBranch>();
-    this->transactionsToInclude = std::make_shared<RawTransactions>();
-
-    this->coinbaseOutputs.push_back(this->witnessCommitment);
     initializer.populateCoinbaseOutputs(this->coinbaseOutputs);
-    this->coinbaseOutputs.rebalance(this->state->coinbaseCoins);
-    this->_regenerateCoinbaseTransaction();
+
+    /* Initialize server */
+    this->updateNetworkState(initializer.getNetworkState());
 }
 
 std::unique_ptr<ConnectionManager::Connection> StratumServer::makeConnection(SocketBase &&socket, ConnectionManager &manager)
@@ -45,6 +40,24 @@ std::unique_ptr<StratumJob> StratumServer::createJob(StratumClientConnection *cl
     OBTAIN_LOCK(_jobGeneratorLock);
 
     return std::make_unique<StratumJob>(++this->jobCounter, diff, this->state, this->coinbase, this->transactionsToInclude, this->merkleBranch, this->hasher);
+}
+
+void StratumServer::updateNetworkState(const NetworkStateRef &state)
+{
+    {
+        OBTAIN_LOCK(_jobGeneratorLock);
+
+        this->state = state;
+
+        this->transactionsToInclude = std::make_shared<RawTransactions>();
+        this->merkleBranch = std::make_shared<MerkleBranch>();
+        this->witnessCommitment = std::make_shared<CoinbaseWitnessCommitment>(CoinbaseWitnessCommitment::forCoinbaseOnly());
+
+        this->coinbaseOutputs[0] = this->witnessCommitment;
+        this->coinbaseOutputs.rebalance(this->state->coinbaseCoins);
+    }
+
+    this->updateWork(true);
 }
 
 void StratumServer::updateCoinbaseOutputs(const CoinbaseOutputs &newOutputs)
@@ -70,23 +83,12 @@ void StratumServer::updateCoinbaseOutputs(CoinbaseOutputs &&newOutputs)
 
 void StratumServer::updateWork(bool forceClientUpdates)
 {
-    this->regenerateCoinbaseTransaction();
+    {
+        OBTAIN_LOCK(_jobGeneratorLock);
+        this->_regenerateCoinbaseTransaction();
+    }
+
     this->sendNewJobsToClients(forceClientUpdates);
-}
-
-void StratumServer::regenerateCoinbaseTransaction()
-{
-    OBTAIN_LOCK(_jobGeneratorLock);
-    this->_regenerateCoinbaseTransaction();
-}
-
-void StratumServer::_regenerateCoinbaseTransaction()
-{
-    this->coinbase = std::make_shared<CoinbaseTransaction>(CoinbaseTransaction::build(
-        this->state->blockHeight,
-        this->coinbaseId,
-        this->coinbaseOutputs
-    ));
 }
 
 void StratumServer::sendNewJobsToClients(bool forceUpdate)
@@ -104,4 +106,11 @@ void StratumServer::sendNewJobsToClients(bool forceUpdate)
     }
 }
 
-
+void StratumServer::_regenerateCoinbaseTransaction()
+{
+    this->coinbase = std::make_shared<CoinbaseTransaction>(CoinbaseTransaction::build(
+        this->state->blockHeight,
+        this->coinbaseId,
+        this->coinbaseOutputs
+    ));
+}

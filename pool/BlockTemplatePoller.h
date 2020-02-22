@@ -1,10 +1,13 @@
 #ifndef BLOCKTEMPLATEPOLLER_H
 #define BLOCKTEMPLATEPOLLER_H
 
-#include "DaemonConnector.h"
+#include <bitcoinrpc/BlockTemplate.h>
+#include <mining/Hash256.h>
 
 #include <util/Thread.h>
 
+
+class DaemonConnector;
 
 class BlockTemplatePoller : public Thread
 {
