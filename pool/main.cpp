@@ -24,17 +24,21 @@ class StratumInitializer : public DaemonConnector::StratumInitializer
         }
 };
 
-extern enum LogLevel __loglevel_mining;
-extern enum LogLevel __loglevel_bitcoinrpc;
-extern enum LogLevel __loglevel_stratum;
-
-int main(int argc, char *argv[])
+static void enableDebugLogging()
 {
+    extern enum LogLevel __loglevel_mining;
+    extern enum LogLevel __loglevel_bitcoinrpc;
+    extern enum LogLevel __loglevel_stratum;
+
     __loglevel = DEBUG;
+
     __loglevel_mining = DEBUG;
     __loglevel_bitcoinrpc = DEBUG;
     __loglevel_stratum = DEBUG;
+}
 
+int main(int argc, char *argv[])
+{
     std::string rpcHostname = "127.0.0.1";
     std::string rpcUsername;
     std::string rpcPassword;
@@ -45,6 +49,8 @@ int main(int argc, char *argv[])
 
     std::string miningAlgorithm = "sha256d";
 
+    bool debug = false;
+
     CommandLineArguments(argc, argv, {
         { stratumPort,          "port",                 'p',        "Port to listen on for incoming stratum connections." },
         { rpcHostname,          "rpc-hostname",         'h',        "Hostname used to connect to the full node RPC interface." },
@@ -52,12 +58,16 @@ int main(int argc, char *argv[])
         { rpcUsername,          "rpc-user",             'u', true,  "Username for full node RPC interface authentication." },
         { rpcPassword,          "rpc-password",         'P', true,  "Password for full node RPC interface authentication." },
         { coinbaseSignature,    "coinbase-signature",   'S',        "Signature to encode in coinbase transactions." },
-        { miningAlgorithm,      "algorithm",            'a',        "Mining algorithm." }
+        { miningAlgorithm,      "algorithm",            'a',        "Mining algorithm." },
+        { debug,                "debug",                'D',        "Enable debug logging." }
     }).processOrPrintUsageAndExit();
+
+    if (debug)
+        enableDebugLogging();
 
     try
     {
-        StratumConfiguration configuration(stratumPort, miningAlgorithm, coinbaseSignature, 0.05);
+        StratumConfiguration configuration(stratumPort, miningAlgorithm, coinbaseSignature, 10.0);
         DaemonConnectorRef daemon = std::make_shared<DaemonConnector>(rpcUsername, rpcPassword, rpcHostname, rpcPort);
         Pool pool(daemon, StratumInitializer(*daemon), configuration);
 
