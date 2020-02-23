@@ -35,6 +35,7 @@ class Lock
 };
 
 
-#define OBTAIN_LOCK(lock)   const Lock::Ref &__ ## lock ## _ref = lock.aquire(); __ ## lock ## _ref.__dummy()
+#define OBTAIN_FOREIGN_LOCK(lock, varname)      const Lock::Ref &__ ## varname = (lock).aquire(); __ ## varname.__dummy()
+#define OBTAIN_LOCK(lock)                       OBTAIN_FOREIGN_LOCK(lock, lock ## _ref)
 
 #endif
