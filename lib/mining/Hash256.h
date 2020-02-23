@@ -19,7 +19,10 @@ class Hash256 : public Hash<uint256_t>
 
         Hash256 &operator=(const Hash256 &src);
 
+        double operator/(const Hash256 &operand) const;
+
         static Hash256 zero(void);
+        static Hash256 diff1(void);
 
     private:
         using Hash::Hash;

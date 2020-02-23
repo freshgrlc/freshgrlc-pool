@@ -4,22 +4,22 @@
 #include <stdint.h>
 #include <stddef.h>
 
-inline uint32_t readBE(uint8_t int32[4])
+inline uint32_t readBE32(const uint8_t int32[4])
 {
     return (int32[0] << 24) | (int32[1] << 16) | (int32[2] << 8) | int32[3];
 }
 
 inline uint32_t swap32(uint32_t x)
 {
-    return readBE((uint8_t *) &x);
+    return readBE32((uint8_t *) &x);
 }
 
 inline void swap32(uint8_t int32[4])
 {
-    *((uint32_t *) int32) = readBE(int32);
+    *((uint32_t *) int32) = readBE32(int32);
 }
 
-inline void swap32(uint32_t *int32)
+inline void swap32(const uint32_t *int32)
 {
     swap32((uint8_t *) int32);
 }
