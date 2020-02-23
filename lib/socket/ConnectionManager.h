@@ -12,60 +12,52 @@
 #include <Thread.h>
 
 
+class IncomingConnection;
+typedef std::unique_ptr<IncomingConnection> IncomingConnectionRef;
+
+
 class ConnectionManager
 {
     public:
-        class Connection : public Socket
+        class Connections
         {
             public:
-                Connection(ConnectionManager &manager, SocketBase &&socket);
+                IncomingConnection &add(IncomingConnectionRef &&connection);
+                IncomingConnectionRef remove(IncomingConnection &connection, bool take = false);
 
-                inline void enableProcessing(void)  { this->receiver.start(); }
-                inline bool dangling(void)          { return _dangling; }
+                template <typename T>
+                inline std::vector<std::unique_ptr<T>> &getAs(void)     { return *((std::vector<std::unique_ptr<T>> *) &_clients); }
+
+                inline Lock &lock(void)                                 { return _lock; }
+
+            protected:
+                Lock _lock;
 
             private:
-                class ReceiverThread : public Thread
-                {
-                    public:
-                        inline ReceiverThread(Connection *parent) : Thread(), parent(*parent) {}
+                std::vector<IncomingConnectionRef> _clients;
 
-                    private:
-                        Connection &parent;
-
-                        void main(void) override;
-                        void initializationCallback(int error) override;
-                        void cleanupCallback(void) override;
-                };
-
-                ReceiverThread receiver;
-                ConnectionManager &_manager;
-                bool _dangling;
-
-                void cleanup(void);
         };
 
-        ConnectionManager(Listener &listener);
+        typedef std::shared_ptr<Connections> ConnectionsRef;
+
+        ConnectionManager(void);
 
         void addConnection(SocketBase &&socket);
         static void addConnection(SocketBase &&socket, void *manager);
 
-        int listen(void);
-
-        inline Listener &listener(void)                                         { return _listener; }
-        inline const std::vector<std::unique_ptr<Connection>> &clients(void)    { return _clients; }
-        inline Lock &clientsLock(void)                                          { return _clients_lock; }
-
-    private:
-        Listener &_listener;
-        std::vector<std::unique_ptr<Connection>> _clients;
+        inline Connections &connections(void)       { return *connectionsHolder; }
 
     protected:
-        Lock _clients_lock;
+        friend class IncomingConnection;
 
-    private:
-        void remove(Connection &connection);
+        std::shared_ptr<Connections> connectionsHolder;
 
-        virtual std::unique_ptr<Connection> makeConnection(SocketBase &&socket, ConnectionManager &manager) = 0;
+        virtual IncomingConnectionRef makeConnection(SocketBase &&socket) = 0;
 };
+
+
+#include <memory>
+
+typedef std::shared_ptr<ConnectionManager> ConnectionManagerRef;
 
 #endif

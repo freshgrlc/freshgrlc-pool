@@ -1,6 +1,7 @@
 #ifndef STRATUM_STRATUMCLIENT_H
 #define STRATUM_STRATUMCLIENT_H
 
+#include <socket/IncomingConnection.h>
 #include <socket/ConnectionManager.h>
 #include <mining/CoinbaseTransaction.h>
 
@@ -9,16 +10,15 @@
 #include <util/Lock.h>
 #include <util/ByteString.h>
 
-
 class StratumServer;
 class StratumJob;
 
-class StratumClientConnection : public ConnectionManager::Connection
+class StratumClientConnection : public IncomingConnection
 {
     public:
         typedef CoinbaseTransaction::nonce1_t nonce1_t;
 
-        StratumClientConnection(ConnectionManager &manager, SocketBase &&socket, StratumServer *server);
+        StratumClientConnection(StratumServer &server, SocketBase &&socket);
         virtual ~StratumClientConnection(void);
 
         void sendReply(const StratumCall &call, const json &reply);
@@ -31,7 +31,7 @@ class StratumClientConnection : public ConnectionManager::Connection
         inline double diff(void)                    { return this->currentDiff; }
 
         void send(const json &payload);
-        using Connection::send;
+        using IncomingConnection::send;
 
         const StratumJob &job(bool forceNew = false);
         void clearJobs(void);

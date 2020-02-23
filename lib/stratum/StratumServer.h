@@ -3,7 +3,7 @@
 
 #include <memory>
 
-#include <socket/ConnectionManager.h>
+#include <socket/ListeningConnectionManager.h>
 #include <mining/CoinbaseOutputs.h>
 #include <mining/RawTransactions.h>
 #include <mining/MerkleBranch.h>
@@ -16,7 +16,7 @@
 class StratumJob;
 class StratumClientConnection;
 
-class StratumServer : public ConnectionManager
+class StratumServer : public ListeningConnectionManager
 {
     public:
         class NetworkStateInitializer
@@ -64,7 +64,7 @@ class StratumServer : public ConnectionManager
 
         void _regenerateCoinbaseTransaction(void);
 
-        virtual std::unique_ptr<Connection> makeConnection(SocketBase &&socket, ConnectionManager &manager) override;
+        virtual IncomingConnectionRef makeConnection(SocketBase &&socket) override;
 };
 
 #endif

@@ -9,7 +9,7 @@
 #include <util/logger.h>
 
 
-StratumServer::StratumServer(Listener &&listener, const NetworkStateInitializer &initializer, BlockSubmitterRef &&blockSubmitter, HashPluginRef hasher, const std::string &coinbaseId, double defaultDiff) : ConnectionManager(_listener),
+StratumServer::StratumServer(Listener &&listener, const NetworkStateInitializer &initializer, BlockSubmitterRef &&blockSubmitter, HashPluginRef hasher, const std::string &coinbaseId, double defaultDiff) : ListeningConnectionManager(_listener),
     extraNonce2Size(sizeof(CoinbaseTransaction::nonce2_t)),
     _listener(std::move(listener)),
     hasher(hasher),
@@ -27,9 +27,9 @@ StratumServer::StratumServer(Listener &&listener, const NetworkStateInitializer 
     this->updateNetworkState(initializer.getNetworkState());
 }
 
-std::unique_ptr<ConnectionManager::Connection> StratumServer::makeConnection(SocketBase &&socket, ConnectionManager &manager)
+IncomingConnectionRef StratumServer::makeConnection(SocketBase &&socket)
 {
-    return std::make_unique<StratumClientConnection>(manager, std::move(socket), this);
+    return std::make_unique<StratumClientConnection>(*this, std::move(socket));
 }
 
 std::unique_ptr<StratumJob> StratumServer::createJob(StratumClientConnection *client, double diff)
@@ -101,16 +101,14 @@ void StratumServer::updateWork(bool forceClientUpdates)
 
 void StratumServer::sendNewJobsToClients(bool forceUpdate)
 {
-    OBTAIN_LOCK(_clients_lock);
+    OBTAIN_FOREIGN_LOCK(this->connections().lock(), clients_lock);
 
-    for (auto &client : this->clients())
+    for (auto &client : this->connections().getAs<StratumClientConnection>())
     {
-        StratumClientConnection &stratumClient = *((StratumClientConnection *) &*client);
-
         if (forceUpdate)
-            stratumClient.clearJobs();
+            client->clearJobs();
 
-        stratumClient.sendJob(forceUpdate);
+        client->sendJob(forceUpdate);
     }
 }
 
