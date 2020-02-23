@@ -27,6 +27,7 @@ class StratumClientConnection : public ConnectionManager::Connection
 
         void sendJob(bool forceNew = false);
         void updateDiff(double newDiff);
+        inline void acceptedShare(double diff)      { this->acceptedShares += diff; }
         inline double diff(void)                    { return this->currentDiff; }
 
         void send(const json &payload);
@@ -47,12 +48,15 @@ class StratumClientConnection : public ConnectionManager::Connection
         std::string clientUsername;
         ByteString _connectionId;
         double currentDiff;
+        time_t startedMining;
+        double acceptedShares;
 
         std::vector<std::unique_ptr<StratumJob>> jobs;
         StratumJob *activeJob;
         Lock _jobsLock;
 
         ByteString genConnectionID(void) const;
+        double calcNewDiff(void);
 
         virtual void onReceive(const Packet &packet) override;
 };

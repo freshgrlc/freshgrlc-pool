@@ -6,6 +6,8 @@
 
 #include <mining/CoinbaseWitnessCommitment.h>
 
+#include <util/logger.h>
+
 
 StratumServer::StratumServer(Listener &&listener, const NetworkStateInitializer &initializer, BlockSubmitterRef &&blockSubmitter, HashPluginRef hasher, const std::string &coinbaseId, double defaultDiff) : ConnectionManager(_listener),
     extraNonce2Size(sizeof(CoinbaseTransaction::nonce2_t)),
@@ -30,20 +32,26 @@ std::unique_ptr<ConnectionManager::Connection> StratumServer::makeConnection(Soc
     return std::make_unique<StratumClientConnection>(manager, std::move(socket), this);
 }
 
-std::unique_ptr<StratumJob> StratumServer::createJob(StratumClientConnection *client)
+std::unique_ptr<StratumJob> StratumServer::createJob(StratumClientConnection *client, double diff)
 {
-    double diff = client->diff();
+    if (diff < 0.0)
+        diff = client->diff();
 
     if (diff < 0.0)
         diff = this->defaultDiff;
 
     OBTAIN_LOCK(_jobGeneratorLock);
 
+    if (this->state->miningDiff * 0x100 < diff)
+        diff = this->state->miningDiff * 0x100 / 4;
+
     return std::make_unique<StratumJob>(++this->jobCounter, diff, this->state, this->coinbase, this->transactionsToInclude, this->merkleBranch, this->hasher);
 }
 
 void StratumServer::updateNetworkState(const NetworkStateRef &state)
 {
+    mlog(INFO, "New block height %d, diff %.3f, %d transactions", state->blockHeight, state->miningDiff, 0);
+
     {
         OBTAIN_LOCK(_jobGeneratorLock);
 

@@ -14,6 +14,7 @@ class NetworkState
         const uint32_t blockHeight;
         const BlockHash previousBlock;
         const Hash256 miningTarget;
+        const double miningDiff;
 
         const uint64_t coinbaseCoins;
 

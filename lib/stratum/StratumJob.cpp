@@ -108,9 +108,21 @@ bool StratumJob::checkSolution(uint32_t time, uint32_t nonce, CoinbaseTransactio
     if (submit)
         blockSubmitter.submitBlock(header, rawCoinbaseTx, this->transactions);
 
+    double shareDiff = Hash256::diff1() / hash / 0x1000;
+    double shareMiningDiff = shareDiff * 0x100;
+
+    mlog(DEBUG, "Share %s, diff %.3f (%.3f/%.3f)", hash.bytes().asHex().c_str(), shareDiff, shareMiningDiff, this->diff());
+
+    if (shareMiningDiff < this->diff())
+    {
+        mlog(WARNING, "Client sent low diff share: %.3f < %.3f", shareMiningDiff, this->diff());
+        throw validation_error("low diff");
+    }
+
 #ifdef SHARE_TARGET_DEBUG
     mlog(DEBUG, "Share  %s %s below", hash.bytes().asHex().c_str(), submit ? "WAS" : "was not");
     mlog(DEBUG, "target %s%s", this->networkState->miningTarget.bytes().asHex().c_str(), submit ? ", SUBMITTED!" : "");
 #endif
+
     return submit;
 }

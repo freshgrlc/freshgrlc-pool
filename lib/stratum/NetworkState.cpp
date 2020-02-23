@@ -24,6 +24,7 @@ NetworkState::NetworkState(uint32_t version, uint32_t bits, uint32_t blockHeight
     blockHeight(blockHeight),
     previousBlock(previousBlock),
     miningTarget(miningTarget),
+    miningDiff(Hash256::diff1() / miningTarget / 4096),
     coinbaseCoins(coinbaseCoins)
 {
 }
@@ -35,6 +36,7 @@ NetworkState::NetworkState(uint32_t version, uint32_t bits, uint32_t notBefore, 
     blockHeight(blockHeight),
     previousBlock(previousBlock),
     miningTarget(miningTarget),
+    miningDiff(Hash256::diff1() / miningTarget / 4096),
     coinbaseCoins(coinbaseCoins)
 {
 }

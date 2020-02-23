@@ -14,6 +14,11 @@
 #include <openssl/sha.h>
 
 
+#define SHARES_PER_MINUTE_TARGET        6
+#define SHARES_PER_MINUTE_TARGET_FUZZ   1.1
+#define DIFF_FLOOR                      0.01
+
+
 using json_exception = nlohmann::detail::exception;
 
 
@@ -23,6 +28,8 @@ StratumClientConnection::StratumClientConnection(ConnectionManager &manager, Soc
     clientUsername(""),
     _connectionId(this->genConnectionID()),
     currentDiff(-1.0),
+    startedMining(std::time(NULL)),
+    acceptedShares(0.0),
     activeJob(nullptr)
 {
     mlog(INFO, "New stratum connection %s", this->connectionId().c_str());
@@ -93,7 +100,7 @@ const StratumJob &StratumClientConnection::job(bool forceNew)
     if (!forceNew && this->activeJob)
         return *this->activeJob;
 
-    this->jobs.push_back(this->server().createJob(this));
+    this->jobs.push_back(this->server().createJob(this, this->calcNewDiff()));
     this->activeJob = this->jobs[this->jobs.size()-1].get();
 
     mlog(DEBUG, "New job '%d'", this->activeJob->id());
@@ -150,6 +157,41 @@ ByteString StratumClientConnection::genConnectionID() const
         return ByteString(hash, sizeof(hash));
 
     throw std::runtime_error("Cannot create stratum connection ID: SHA1() failed");
+}
+
+double StratumClientConnection::calcNewDiff()
+{
+    time_t totalMiningTime = std::time(NULL) - this->startedMining;
+    double newDiff = this->acceptedShares / totalMiningTime * 60 / SHARES_PER_MINUTE_TARGET;
+
+    if (totalMiningTime <= 0)
+        return -1.0;
+
+    if (this->acceptedShares == 0.0)
+    {
+        /* Restart measurement */
+        this->startedMining = std::time(NULL);
+
+        newDiff = this->currentDiff / 10;
+        return newDiff >= DIFF_FLOOR ? newDiff : DIFF_FLOOR;
+    }
+
+    if (totalMiningTime < 10)
+        return -1.0;
+
+    if (newDiff < DIFF_FLOOR)
+        newDiff = DIFF_FLOOR;
+
+    mlog(DEBUG, "Diff calc: %.3f diff over %d secs = %.3f diff/sec", this->acceptedShares, totalMiningTime, this->acceptedShares / totalMiningTime);
+    mlog(DEBUG, "           New target: %.3f, current band: %.3f - %.3f", newDiff, this->currentDiff / SHARES_PER_MINUTE_TARGET_FUZZ, this->currentDiff * SHARES_PER_MINUTE_TARGET_FUZZ);
+
+    if (newDiff > this->currentDiff * SHARES_PER_MINUTE_TARGET_FUZZ ||
+        newDiff < this->currentDiff / SHARES_PER_MINUTE_TARGET_FUZZ)
+    {
+        return newDiff;
+    }
+
+    return this->currentDiff;
 }
 
 void StratumClientConnection::onReceive(const Packet &packet)

@@ -30,7 +30,7 @@ class StratumServer : public ConnectionManager
 
         StratumServer(Listener &&listener, const NetworkStateInitializer &initializer, BlockSubmitterRef &&blockSubmitter, const HashPluginRef hasher, const std::string &coinbaseId, double defaultDiff = 1.0);
 
-        std::unique_ptr<StratumJob> createJob(StratumClientConnection *client);
+        std::unique_ptr<StratumJob> createJob(StratumClientConnection *client, double diff = -1.0);
 
         void updateNetworkState(const NetworkStateRef &state);
 
