@@ -38,6 +38,7 @@ void CoinbaseOutputs::rebalance(uint64_t totalCoins)
     if (newTotalCoins != totalCoins)
     {
         /* Rounding error */
+        mlog(WARNING, "Rebalanced coins (%llu) != coinbase reward (%llu), retrying...", newTotalCoins, totalCoins);
         return this->rebalance(totalCoins);
     }
 }
