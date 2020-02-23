@@ -39,6 +39,7 @@ class StratumClientConnection : public ConnectionManager::Connection
         std::unique_ptr<StratumJob> getActiveJob(uint32_t id);
 
         inline std::string connectionId(void) const { return _connectionId.asHex(); }
+        inline const char *logId(void) const        { return _logId.c_str(); }
         inline nonce1_t extraNonce1(void) const     { return *((const nonce1_t *) &_connectionId.begin()[0]); }
         inline StratumServer &server(void)          { return _server; }
 
@@ -50,6 +51,7 @@ class StratumClientConnection : public ConnectionManager::Connection
         double currentDiff;
         time_t startedMining;
         double acceptedShares;
+        std::string _logId;
 
         std::vector<std::unique_ptr<StratumJob>> jobs;
         StratumJob *activeJob;

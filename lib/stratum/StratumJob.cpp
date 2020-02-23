@@ -84,7 +84,7 @@ json StratumJob::toJson(bool force) const
     });
 }
 
-bool StratumJob::checkSolution(uint32_t time, uint32_t nonce, CoinbaseTransaction::nonce1_t extraNonce1, CoinbaseTransaction::nonce2_t extraNonce2, BlockSubmitter &blockSubmitter)
+bool StratumJob::checkSolution(uint32_t time, uint32_t nonce, CoinbaseTransaction::nonce1_t extraNonce1, CoinbaseTransaction::nonce2_t extraNonce2, BlockSubmitter &blockSubmitter, const char *logId)
 {
     static const HashPluginRef sha256dHasher = get_hashplugin("sha256d");
 
@@ -100,7 +100,7 @@ bool StratumJob::checkSolution(uint32_t time, uint32_t nonce, CoinbaseTransactio
     BlockHeader header(this->networkState->version, this->networkState->previousBlock, merkleRoot, time, this->networkState->bits, nonce);
     BlockHash hash = header.hash(this->hasher);
 
-    mlog(DEBUG, "Received solution from miner: time %08x, nonce %08x, extraNonce2 %08x, share %s", time, nonce, extraNonce2, hash.bytes().asHex().c_str());
+    mlog(DEBUG, "[%s] Received solution from miner: time %08x, nonce %08x, extraNonce2 %08x, share %s", logId, time, nonce, extraNonce2, hash.bytes().asHex().c_str());
 
     bool submit = hash <= this->networkState->miningTarget;
 
@@ -111,17 +111,17 @@ bool StratumJob::checkSolution(uint32_t time, uint32_t nonce, CoinbaseTransactio
     double shareDiff = Hash256::diff1() / hash / 0x1000;
     double shareMiningDiff = shareDiff * 0x100;
 
-    mlog(DEBUG, "Share %s, diff %.3f (%.3f/%.3f)", hash.bytes().asHex().c_str(), shareDiff, shareMiningDiff, this->diff());
+    mlog(DEBUG, "[%s] Share %s, diff %.3f (%.3f/%.3f)", logId, hash.bytes().asHex().c_str(), shareDiff, shareMiningDiff, this->diff());
 
     if (shareMiningDiff < this->diff())
     {
-        mlog(WARNING, "Client sent low diff share: %.3f < %.3f", shareMiningDiff, this->diff());
+        mlog(WARNING, "[%s] Client sent low diff share: %.3f < %.3f", logId, shareMiningDiff, this->diff());
         throw validation_error("low diff");
     }
 
 #ifdef SHARE_TARGET_DEBUG
-    mlog(DEBUG, "Share  %s %s below", hash.bytes().asHex().c_str(), submit ? "WAS" : "was not");
-    mlog(DEBUG, "target %s%s", this->networkState->miningTarget.bytes().asHex().c_str(), submit ? ", SUBMITTED!" : "");
+    mlog(DEBUG, "[%s] Share  %s %s below", logId, hash.bytes().asHex().c_str(), submit ? "WAS" : "was not");
+    mlog(DEBUG, "[%s] target %s%s", logId, this->networkState->miningTarget.bytes().asHex().c_str(), submit ? ", SUBMITTED!" : "");
 #endif
 
     return submit;

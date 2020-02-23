@@ -33,6 +33,7 @@ StratumClientConnection::StratumClientConnection(ConnectionManager &manager, Soc
     activeJob(nullptr)
 {
     mlog(INFO, "New stratum connection %s", this->connectionId().c_str());
+    this->_logId = this->connectionId().substr(0, 8);
 }
 
 StratumClientConnection::~StratumClientConnection()
@@ -83,7 +84,7 @@ void StratumClientConnection::sendJob(bool forceNew)
 
 void StratumClientConnection::updateDiff(double newDiff)
 {
-    mlog(DEBUG, "Updating client diff to %.3f", newDiff);
+    mlog(DEBUG, "[%s] Updating client diff to %.3f", this->logId(), newDiff);
     this->sendUnsolicited("mining.set_difficulty", (json) { newDiff });
     this->currentDiff = newDiff;
 }
@@ -103,7 +104,7 @@ const StratumJob &StratumClientConnection::job(bool forceNew)
     this->jobs.push_back(this->server().createJob(this, this->calcNewDiff()));
     this->activeJob = this->jobs[this->jobs.size()-1].get();
 
-    mlog(DEBUG, "New job '%d'", this->activeJob->id());
+    mlog(DEBUG, "[%s] New job '%d'", this->logId(), this->activeJob->id());
 
     return *this->activeJob;
 }
@@ -115,7 +116,7 @@ void StratumClientConnection::clearJobs()
     this->jobs.clear();
     this->activeJob = NULL;
 
-    mlog(DEBUG, "Cleared jobs");
+    mlog(DEBUG, "[%s] Cleared jobs", this->logId());
 }
 
 std::unique_ptr<StratumJob> StratumClientConnection::getActiveJob(uint32_t id)
@@ -182,8 +183,8 @@ double StratumClientConnection::calcNewDiff()
     if (newDiff < DIFF_FLOOR)
         newDiff = DIFF_FLOOR;
 
-    mlog(DEBUG, "Diff calc: %.3f diff over %d secs = %.3f diff/sec", this->acceptedShares, totalMiningTime, this->acceptedShares / totalMiningTime);
-    mlog(DEBUG, "           New target: %.3f, current band: %.3f - %.3f", newDiff, this->currentDiff / SHARES_PER_MINUTE_TARGET_FUZZ, this->currentDiff * SHARES_PER_MINUTE_TARGET_FUZZ);
+    mlog(DEBUG, "[%s] Diff calc: %.3f diff over %d secs = %.3f diff/sec", this->logId(), this->acceptedShares, totalMiningTime, this->acceptedShares / totalMiningTime);
+    mlog(DEBUG, "[%s]            New target: %.3f, current band: %.3f - %.3f", this->logId(), newDiff, this->currentDiff / SHARES_PER_MINUTE_TARGET_FUZZ, this->currentDiff * SHARES_PER_MINUTE_TARGET_FUZZ);
 
     if (newDiff > this->currentDiff * SHARES_PER_MINUTE_TARGET_FUZZ ||
         newDiff < this->currentDiff / SHARES_PER_MINUTE_TARGET_FUZZ)
@@ -203,7 +204,7 @@ void StratumClientConnection::onReceive(const Packet &packet)
 
         if (!payload.is_object() || !(call = StratumCall::parseMessage(payload)))
         {
-            mlog(WARNING, "Received invalid stratum packet: %s", packet.data);
+            mlog(WARNING, "[%s] Received invalid stratum packet: %s", this->logId(), packet.data);
             return;
         }
 
@@ -212,22 +213,23 @@ void StratumClientConnection::onReceive(const Packet &packet)
             const auto &message = *((stratum::messages::MiningSubscribe *) call.get());
 
             this->clientSoftware = message.client;
-            mlog(INFO, "Client is using '%s'", this->clientSoftware.c_str());
+            mlog(INFO, "[%s] Client is using '%s'", this->logId(), this->clientSoftware.c_str());
         }
         else if (call->method == stratum::messages::MiningAuthorize::METHOD)
         {
             const auto &message = *((stratum::messages::MiningAuthorize *) call.get());
 
             this->clientUsername = message.username;
-            mlog(INFO, "Client identified as '%s'", this->clientUsername.c_str());
+            mlog(INFO, "[%s] Client identified as '%s'", this->logId(), this->clientUsername.c_str());
+            this->_logId = this->clientUsername + "/" + this->connectionId().substr(0, 8);
         }
 
         call->process(*this);
     }
     catch (json_exception &e)
     {
-        mlog(WARNING, "Received invalid stratum packet: %s", packet.data);
-        mlog(WARNING, "Caused by JSON parse error: %s", e.what());
+        mlog(WARNING, "[%s] Received invalid stratum packet: %s", this->logId(), packet.data);
+        mlog(WARNING, "[%s] Caused by JSON parse error: %s", this->logId(), e.what());
         return;
     }
 }

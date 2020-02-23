@@ -32,7 +32,7 @@ void MiningSubmit::process(StratumClientConnection &connection)
 
     try
     {
-        job->checkSolution(this->blockHeaderTime, this->blockHeaderNonce, connection.extraNonce1(), this->extraNonce2, connection.server().blockSubmitter());
+        job->checkSolution(this->blockHeaderTime, this->blockHeaderNonce, connection.extraNonce1(), this->extraNonce2, connection.server().blockSubmitter(), connection.logId());
 
         connection.acceptedShare(job->diff());
         connection.sendReply(*this, true);

@@ -37,7 +37,7 @@ class StratumJob
 
         json toJson(bool force) const;
 
-        bool checkSolution(uint32_t time, uint32_t nonce, CoinbaseTransaction::nonce1_t extraNonce1, CoinbaseTransaction::nonce2_t extraNonce2, BlockSubmitter &blockSubmitter);
+        bool checkSolution(uint32_t time, uint32_t nonce, CoinbaseTransaction::nonce1_t extraNonce1, CoinbaseTransaction::nonce2_t extraNonce2, BlockSubmitter &blockSubmitter, const char *logId);
 
         inline uint32_t id(void) const              { return _id; }
         inline double diff(void) const              { return _diff; }
