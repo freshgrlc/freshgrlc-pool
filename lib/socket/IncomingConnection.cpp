@@ -4,8 +4,7 @@
 #include <util/logger.h>
 
 
-IncomingConnection::IncomingConnection(ConnectionManager &manager, SocketBase &&socket) : Socket(std::move(socket)),
-    receiver(this),
+IncomingConnection::IncomingConnection(ConnectionManager &manager, SocketBase &&socket) : AsynchronousSocket(std::move(socket)),
     _connections(manager.connectionsHolder),
     _dangling(false)
 {
@@ -34,22 +33,4 @@ void IncomingConnection::cleanup()
 {
     mlog(DEBUG, "connection [%p]: Cleaning up", this);
     this->_connections->remove(*this);
-}
-
-void IncomingConnection::ReceiverThread::main()
-{
-    this->parent.receive();
-}
-
-void IncomingConnection::ReceiverThread::initializationCallback(int error)
-{
-    if (!error)
-        mlog(DEBUG, "Spawned thread %p for connection %p", this->threadId(), &this->parent);
-    else
-        mlog(WARNING, "Failed to spawn connection thread (error %d), this will result in a dangling Connection object", error);
-}
-
-void IncomingConnection::ReceiverThread::cleanupCallback()
-{
-    this->parent.cleanup();
 }
