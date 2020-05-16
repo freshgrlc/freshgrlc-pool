@@ -37,7 +37,7 @@ class ConstByteStringRef
         inline std::string asString(void) const             { return std::string((const char *) this->data, this->length); }
         inline std::string asHex(void) const                { return this->asHexPretty("", "", -1); }
 
-        std::string asHexPretty(const std::string prefix = "<", const std::string postfix = ">", int groupSize = 4) const;
+        std::string asHexPretty(const std::string prefix = "<", const std::string postfix = ">", int groupSize = 4, char delimiter = ' ') const;
 
         template <class T>
         inline static ConstByteStringRef raw(const T &v)    { return ConstByteStringRef((const uint8_t *) &v, sizeof(T)); }

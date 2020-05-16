@@ -49,8 +49,8 @@ class ByteString : public std::vector<uint8_t>
 
         inline std::string asString(void) const                         { return ConstByteStringRef(*this).asString(); }
         inline std::string asHex(void) const                            { return ConstByteStringRef(*this).asHex(); }
-        inline std::string asHexPretty(const std::string prefix = "<", const std::string postfix = ">", int groupSize = 4) const
-                                                                        { return ConstByteStringRef(*this).asHexPretty(prefix, postfix, groupSize); }
+        inline std::string asHexPretty(const std::string prefix = "<", const std::string postfix = ">", int groupSize = 4, char delimiter = ' ') const
+                                                                        { return ConstByteStringRef(*this).asHexPretty(prefix, postfix, groupSize, delimiter); }
 
         template<typename T> T parseUIntLE(void)
         {
