@@ -17,7 +17,7 @@
 RPCConnection::RPCConnection(const std::string &username, const std::string &password, const std::string &host, int port) :
     _host(host),
     _port(port),
-    _socket(RPCSocket::connectToFor(host, port, *this)),
+    _socket(RPCSocket::connectToFor(host, port)),
     _authkey(makeAuthKey(username, password))
 {
 }
@@ -154,7 +154,7 @@ void RPCConnection::submitBlock(const BlockHeader &header, const ByteString &coi
 bool RPCConnection::connectIfNotConnected()
 {
     if (!_socket.get() || !_socket->connected())
-        _socket = RPCSocket::connectToFor(_host, _port, *this);
+        _socket = RPCSocket::connectToFor(_host, _port);
 
     return _socket.get() && _socket->connected();
 }

@@ -13,14 +13,13 @@ typedef std::unique_ptr<RPCSocket> RPCSocketRef;
 class RPCSocket : public Socket
 {
     public:
-        inline RPCSocket(RPCConnection &parent, const std::string &host, int port) : Socket(openConnectionTo(host, port)),
-            _parent(parent)
+        inline RPCSocket(const std::string &host, int port) : Socket(openConnectionTo(host, port))
         {
         }
 
-        inline static RPCSocketRef connectToFor(const std::string &host, int port, RPCConnection &parent)
+        inline static RPCSocketRef connectToFor(const std::string &host, int port)
         {
-            return std::make_unique<RPCSocket>(parent, host, port);
+            return std::make_unique<RPCSocket>(host, port);
         }
 
         inline std::string sendAndReceive(const std::string &data)
@@ -36,7 +35,6 @@ class RPCSocket : public Socket
         }
 
     private:
-        RPCConnection &_parent;
         std::string response;
 
         void onReceive(const Packet &packet) override
