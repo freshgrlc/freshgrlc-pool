@@ -21,3 +21,5 @@ add_subdirectory(lib/bitcoinp2p)
 add_subdirectory(plugins)
 
 add_subdirectory(pool)
+
+add_subdirectory(utils/crawler)
