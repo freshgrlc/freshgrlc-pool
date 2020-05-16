@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <netdb.h>
 #include <sys/socket.h>
+#include <netinet/tcp.h>
 
 #include <util.h>
 
@@ -129,6 +130,10 @@ int Socket::openConnectionTo(const std::string &host, int port)
         ERRNO_ERROR();
         return -1;
     }
+
+    /* Drastically shorten TCP connect timeout */
+    int retries = 3;
+    setsockopt(fd, IPPROTO_TCP, TCP_SYNCNT, &retries, sizeof(retries));
 
     if (connect(fd, &ip_addr.s_addr, ip_addr_len) < 0)
     {
