@@ -1,124 +1,14 @@
 #include <iostream>
+#include <stdexcept>
 #include <unistd.h>
-
-#include <bitcoinp2p/P2PConnection.h>
 
 #include <util/ByteString.h>
 #include <util/CommandLineArguments.h>
 #include <util/logger.h>
 
-#include <bitcoinp2p/messages/GetAddr.h>
-
+#include "ConnectionManager.h"
 
 #define DEFAULT_NETWORK_MAGIC   "d2c6b6db"
-
-
-using namespace bitcoinp2p;
-
-
-class ConnectionManager;
-
-class NodeConnection : public P2PConnection
-{
-    public:
-        inline NodeConnection(const std::string &host, int port, const ConstByteStringRef &magic, ConnectionManager *parent) : P2PConnection(host, port, magic), parent(parent), _connected(false) {}
-
-        inline bool connected(void) { return _connected; }
-
-    private:
-        ConnectionManager * const parent;
-        bool _connected;
-
-        inline void handshakeComplete() override
-        {
-            _connected = true;
-            this->sendMessage(messages::GetAddr());
-        }
-
-        void processMessage(const P2PMessageRef &message) override;
-};
-
-class ConnectionManager : public std::vector<std::unique_ptr<NodeConnection>>
-{
-    public:
-        inline ConnectionManager(ByteString &&magic) : magic(std::move(magic)) {}
-
-        inline void addConnection(const std::string &host, uint16_t port)
-        {
-            mlog(INFO, "Connecting to %s:%d...", host.c_str(), port);
-            this->push_back(std::make_unique<NodeConnection>(host, port, this->magic, this));
-        }
-
-        inline void addConnectionIfNotExists(const std::string &host, uint16_t port)
-        {
-            OBTAIN_LOCK(lock);
-
-            for (auto &conn : *this)
-            {
-                if (conn->host() == host && conn->port() == port)
-                    return;
-            }
-
-            this->addConnection(host, port);
-        }
-
-        inline int totalNodes(void)
-        {
-            return this->size();
-        }
-
-        inline int connectedNodes(void)
-        {
-            int connectedNodes = 0;
-
-            OBTAIN_LOCK(lock);
-
-            for (auto &conn : *this)
-            {
-                if (conn->connected())
-                    connectedNodes++;
-            }
-
-            return connectedNodes;
-        }
-
-    private:
-        Lock lock;
-        const ByteString magic;
-};
-
-void NodeConnection::processMessage(const P2PMessageRef &message)
-{
-    this->P2PConnection::processMessage(message);
-
-    if (message->type() == P2PMessage::ADDR)
-    {
-        mlog(INFO, "Received address list from node:");
-
-        for (int idx = 1; idx < message->payload().size(); idx += 30)
-        {
-            static const uint8_t ipv4_prefix[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff };
-            const uint64_t *services = (uint64_t *) &message->payload()[idx+4];
-            const uint8_t *ip = &message->payload()[idx+12];
-            const uint16_t port = message->payload()[idx+28] * 0x100 | message->payload()[idx+29];
-
-            if (!memcmp(ip, ipv4_prefix, sizeof(ipv4_prefix)))
-            {
-                mlog(INFO, " [%2d] %d.%d.%d.%d:%d (services: 0x%014lx)", idx / 30 + 1, ip[12], ip[13], ip[14], ip[15], port, *services);
-
-                std::string host = std::to_string(ip[12]) + "." + std::to_string(ip[13]) + "." + std::to_string(ip[14]) + "." + std::to_string(ip[15]);
-                parent->addConnectionIfNotExists(host, port);
-            }
-            else
-                mlog(INFO, " [%2d] %s:%d (services: 0x%04lx)", idx / 30 + 1, ConstByteStringRef(ip, 16).asHexPretty("[", "]", 2).c_str(), port, *services);
-        }
-
-        mlog(INFO, "===========================");
-        mlog(INFO, "   Total nodes:     %4d", this->parent->totalNodes());
-        mlog(INFO, "   Connected nodes: %4d", this->parent->connectedNodes());
-        mlog(INFO, "===========================");
-    }
-}
 
 static void enableDebugLogging()
 {
@@ -160,9 +50,29 @@ int main(int argc, char *argv[])
     {
         ConnectionManager manager(std::move(magic));
 
-        manager.addConnection(host, port);
+        mlog(DEBUG, "Test");
+        manager.addNode(host, port);
 
-        for (;;) pause();
+        for (;;)
+        {
+            sleep(60);
+
+            auto nodeList = manager.getNodeList();
+            int toTry = manager.nodesWaitingForConnection();
+            int notAvailable = manager.totalNodes() - nodeList.size();
+
+            mlog(INFO, "==============================================");
+            mlog(INFO, "|                 NODE DUMP                  |");
+            mlog(INFO, "==============================================");
+
+            for (std::string &node : nodeList)
+                mlog(INFO, "| %s", node.c_str());
+
+            mlog(INFO, "|");
+            mlog(INFO, "+ %d unavailable nodes (%d yet to try)", notAvailable, toTry);
+
+            mlog(INFO, "==============================================");
+        }
     }
     catch (const std::runtime_error &e)
     {
@@ -173,4 +83,3 @@ int main(int argc, char *argv[])
         return 1;
     }
 }
-
