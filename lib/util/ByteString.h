@@ -13,6 +13,7 @@
 class ByteString : public std::vector<uint8_t>
 {
     public:
+        inline ByteString(std::vector<uint8_t> &&src) : vector(src) {}
         inline ByteString(ByteString &&src) : vector(src) {}
 
         inline ByteString(void) : vector() {}
@@ -28,12 +29,21 @@ class ByteString : public std::vector<uint8_t>
         ByteString &operator+=(const ByteString &toAppend);
         inline ByteString &operator+=(uint8_t b)                        { this->push_back(b); return *this; }
 
+        template <typename T>
+        inline ByteString &operator<<(const T &toAppend)                { return *this += ConstByteStringRef::raw(toAppend); }
+
         inline ByteString operator+(const ConstByteStringRef &toAppend) { ByteString copy(*this); copy += toAppend; return copy; }
         inline ByteString operator+(const ByteString &toAppend)         { return *this + ConstByteStringRef(toAppend); }
 
         inline ByteString &appendLE(uint16_t num)                       { return *this += ConstByteStringRef((uint8_t *) &num, sizeof(num)); }
         inline ByteString &appendLE(uint32_t num)                       { return *this += ConstByteStringRef((uint8_t *) &num, sizeof(num)); }
         inline ByteString &appendLE(uint64_t num)                       { return *this += ConstByteStringRef((uint8_t *) &num, sizeof(num)); }
+
+        inline ByteString &operator=(const ConstByteStringRef &source)  { this->clear(); return *this += source; }
+        inline ByteString &operator=(const ByteString &source)          { this->clear(); return *this += source; }
+
+        template <typename T>
+        inline ByteString &operator=(const T &source)                   { this->clear(); return *this << source; }
 
         ByteString reverse(void);
 
@@ -62,6 +72,9 @@ class ByteString : public std::vector<uint8_t>
         }
 
         static ByteString fromHex(const std::string &hex);
+
+        template<typename T>
+        inline static ByteString from(const T &data)                    { return ByteString(ConstByteStringRef::raw(data)); }
 
         inline static ByteString empty(void)                            { return ByteString(NULL, 0); }
 };
