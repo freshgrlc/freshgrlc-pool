@@ -16,6 +16,7 @@ add_subdirectory(lib/socket)
 add_subdirectory(lib/stratum)
 add_subdirectory(lib/bitcoinrpc)
 add_subdirectory(lib/mining)
+add_subdirectory(lib/bitcoinp2p)
 
 add_subdirectory(plugins)
 
