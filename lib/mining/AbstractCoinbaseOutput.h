@@ -17,7 +17,7 @@ class AbstractCoinbaseOutput
 
         operator const ByteString (void);
 
-        virtual const script::Script redeemScript(void) = 0;
+        virtual const script::Script redeemScript(void) const = 0;
 
     protected:
         inline AbstractCoinbaseOutput(uint64_t coins = 0) : coins(coins) {}
@@ -26,6 +26,6 @@ class AbstractCoinbaseOutput
 
 #include <memory>
 
-typedef std::shared_ptr<AbstractCoinbaseOutput> AbstractCoinbaseOutputRef;
+typedef std::unique_ptr<AbstractCoinbaseOutput> AbstractCoinbaseOutputRef;
 
 #endif

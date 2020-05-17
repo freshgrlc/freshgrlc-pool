@@ -2,7 +2,7 @@
 
 using namespace script;
 
-const Script CoinbaseCommitment::redeemScript()
+const Script CoinbaseCommitment::redeemScript() const
 {
     return Script() << OP_RETURN << this->commitment;
 }

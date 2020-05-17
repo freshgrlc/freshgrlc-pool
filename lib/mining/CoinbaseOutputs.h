@@ -17,8 +17,7 @@ class CoinbaseOutputs : public std::vector<AbstractCoinbaseOutputRef>
 {
     public:
         inline CoinbaseOutputs(void) : vector() {}
-        inline CoinbaseOutputs(const CoinbaseOutputs &src) : vector(src) {}
-        inline CoinbaseOutputs(CoinbaseOutputs &&src) : vector(src) {}
+        inline CoinbaseOutputs(CoinbaseOutputs &&src) : vector(std::move(src)) {}
 
         inline CoinbaseOutputs &operator=(CoinbaseOutputs &&src)
         {

@@ -7,7 +7,7 @@
 using namespace script;
 
 
-const Script CoinbaseOutput::redeemScript()
+const Script CoinbaseOutput::redeemScript() const
 {
     switch (this->outputType)
     {

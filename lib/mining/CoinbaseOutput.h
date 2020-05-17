@@ -20,7 +20,7 @@ class CoinbaseOutput : public AbstractCoinbaseOutput
         const Hash160 destination;
         const Type outputType;
 
-        const script::Script redeemScript() override;
+        const script::Script redeemScript() const override;
 
         inline static CoinbaseOutput p2pkh(const Hash160 &destination, uint64_t coins)  { return CoinbaseOutput(P2PKH, destination, coins); }
         inline static CoinbaseOutput p2sh(const Hash160 &destination, uint64_t coins)   { return CoinbaseOutput(P2SH, destination, coins); }
