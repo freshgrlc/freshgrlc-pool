@@ -26,6 +26,8 @@ class StratumServer : public ListeningConnectionManager
                 virtual NetworkState getNetworkState(void) const = 0;
         };
 
+        const size_t extraNonce2Size;
+
         StratumServer(Listener &&listener, const NetworkStateInitializer &initializer, BlockSubmitter &blockSubmitter, const HashPluginRef hasher, const std::string &coinbaseId);
 
         void updateNetworkState(NetworkState &&state);

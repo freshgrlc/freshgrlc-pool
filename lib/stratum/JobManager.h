@@ -18,8 +18,6 @@ class StratumServer;
 class JobManager
 {
     public:
-        const size_t extraNonce2Size;
-
         JobManager(StratumServer &server, StratumConnectionManager &connectionManager, double defaultDiff = 1.0);
 
         std::unique_ptr<StratumJob> createJob(StratumClientConnection *client, double diff = -1.0);

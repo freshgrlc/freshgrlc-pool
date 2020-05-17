@@ -32,7 +32,7 @@ void MiningSubscribe::process(StratumClientConnection &connection)
             },
         }),
         ConstByteStringRef::raw(connection.extraNonce1()).asHex(),
-        connection.jobManager().extraNonce2Size
+        connection.server().extraNonce2Size
     };
 
     connection.sendReply(*this, reply);

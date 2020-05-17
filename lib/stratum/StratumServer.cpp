@@ -10,6 +10,7 @@
 
 
 StratumServer::StratumServer(Listener &&listener, const NetworkStateInitializer &initializer, BlockSubmitter &blockSubmitter, HashPluginRef hasher, const std::string &coinbaseId) : ListeningConnectionManager(std::move(listener)),
+    extraNonce2Size(sizeof(CoinbaseTransaction::nonce2_t)),
     _hasher(hasher),
     _blockSubmitter(blockSubmitter),
     _coinbaseId(coinbaseId)

@@ -6,7 +6,6 @@
 
 
 JobManager::JobManager(StratumServer &server, StratumConnectionManager &connectionManager, double defaultDiff) :
-    extraNonce2Size(sizeof(CoinbaseTransaction::nonce2_t)),
     _server(server),
     _connectionManager(connectionManager),
     defaultDiff(defaultDiff),
