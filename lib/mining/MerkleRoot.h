@@ -3,15 +3,19 @@
 
 #include "Hash256.h"
 
+class MerkleBranch;
+
 class MerkleNode : public Hash256
 {
-    protected:
-        inline MerkleNode(const Hash256 raw) : Hash256(raw) {}
+    public:
         inline MerkleNode(const MerkleNode &that) : Hash256(that) {}
 
-        static MerkleNode fromRawTxIdBlob(const ConstByteStringRef &txids);
+    protected:
+        friend class MerkleBranch;
 
-    friend class MerkleBranch;
+        inline MerkleNode(const Hash256 raw) : Hash256(raw) {}
+
+        static MerkleNode fromRawTxIdBlob(const ConstByteStringRef &txids);
 };
 
 class MerkleRoot : public MerkleNode
@@ -20,9 +24,9 @@ class MerkleRoot : public MerkleNode
         static MerkleRoot fromTxIds(const std::vector<Hash256> &txs);
 
     private:
-        inline MerkleRoot(const MerkleNode &rootNode) : MerkleNode(rootNode) {}
+        friend class MerkleBranch;
 
-    friend class MerkleBranch;
+        inline MerkleRoot(const MerkleNode &rootNode) : MerkleNode(rootNode) {}
 };
 
 #endif
