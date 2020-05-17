@@ -30,7 +30,8 @@ StratumClientConnection::StratumClientConnection(StratumServer &server, SocketBa
     currentDiff(-1.0),
     startedMining(std::time(NULL)),
     acceptedShares(0.0),
-    activeJob(nullptr)
+    activeJob(nullptr),
+    _jobManager(nullptr)
 {
     mlog(INFO, "New stratum connection %s", this->connectionId().c_str());
     this->_logId = this->connectionId().substr(0, 8);
@@ -101,7 +102,7 @@ const StratumJob &StratumClientConnection::job(bool forceNew)
     if (!forceNew && this->activeJob)
         return *this->activeJob;
 
-    this->jobs.push_back(this->server().createJob(this, this->calcNewDiff()));
+    this->jobs.push_back(this->jobManager().createJob(this, this->calcNewDiff()));
     this->activeJob = this->jobs[this->jobs.size()-1].get();
 
     mlog(DEBUG, "[%s] New job '%d'", this->logId(), this->activeJob->id());
@@ -193,6 +194,14 @@ double StratumClientConnection::calcNewDiff()
     }
 
     return this->currentDiff;
+}
+
+JobManager &StratumClientConnection::jobManager(bool exceptionOnNull) const
+{
+    if (exceptionOnNull && !_jobManager)
+        throw std::runtime_error("Attempt to access jobmanager for unpooled connection!");
+
+    return *_jobManager;
 }
 
 void StratumClientConnection::onReceive(const Packet &packet)

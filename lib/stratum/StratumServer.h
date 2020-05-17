@@ -5,16 +5,17 @@
 
 #include <socket/ListeningConnectionManager.h>
 #include <mining/CoinbaseOutputs.h>
-#include <mining/RawTransactions.h>
 #include <mining/MerkleBranch.h>
-#include <mining/CoinbaseTransaction.h>
 #include <interfaces/plugins/HashPlugin.h>
+#include <util/Thread.h>
 
 #include "NetworkState.h"
 #include "BlockSubmitter.h"
+#include "BlockGenerationInformation.h"
+#include "Pool.h"
 
-class StratumJob;
-class StratumClientConnection;
+
+class StratumConnectionManager;
 
 class StratumServer : public ListeningConnectionManager
 {
@@ -22,49 +23,32 @@ class StratumServer : public ListeningConnectionManager
         class NetworkStateInitializer
         {
             public:
-                virtual NetworkStateRef getNetworkState(void) const = 0;
-                virtual void populateCoinbaseOutputs(CoinbaseOutputs &outputs) const = 0;
+                virtual NetworkState getNetworkState(void) const = 0;
         };
 
-        const int extraNonce2Size;
+        StratumServer(Listener &&listener, const NetworkStateInitializer &initializer, BlockSubmitter &blockSubmitter, const HashPluginRef hasher, const std::string &coinbaseId);
 
-        StratumServer(Listener &&listener, const NetworkStateInitializer &initializer, BlockSubmitterRef &&blockSubmitter, const HashPluginRef hasher, const std::string &coinbaseId, double defaultDiff = 1.0);
+        void updateNetworkState(NetworkState &&state);
 
-        std::unique_ptr<StratumJob> createJob(StratumClientConnection *client, double diff = -1.0);
+        inline BlockSubmitter &blockSubmitter(void) const                       { return _blockSubmitter; }
+        inline BlockGenerationInformationRef blockGenerationInformation(void)   { return _generationInformation; }
+        inline HashPluginRef hasher(void) const                                 { return _hasher; }
+        inline const ByteString coinbaseId(void) const                          { return _coinbaseId; }
 
-        void updateNetworkState(const NetworkStateRef &state);
-
-        void updateCoinbaseOutputs(const CoinbaseOutputs &newOutputs);
-        void updateCoinbaseOutputs(CoinbaseOutputs &&newOutputs);
-
-        inline BlockSubmitter &blockSubmitter(void) { return *_blockSubmitter; }
-
-    private:
-        Listener _listener;
-        Lock _jobGeneratorLock;
-
-        HashPluginRef hasher;
-        BlockSubmitterRef _blockSubmitter;
-
-        ByteString coinbaseId;
-
-        NetworkStateRef state;
-        RawTransactionsRef transactionsToInclude;
-        MerkleBranchRef merkleBranch;
-        AbstractCoinbaseOutputRef witnessCommitment;
-
-        CoinbaseOutputs coinbaseOutputs;
-        CoinbaseTransactionRef coinbase;
-
-        double defaultDiff;
-        uint32_t jobCounter;
-
-        void updateWork(bool forceClientUpdates = false);
-        void sendNewJobsToClients(bool forceUpdate);
-
-        void _regenerateCoinbaseTransaction(void);
+    protected:
+        friend class StratumConnectionManager;
 
         virtual IncomingConnectionRef makeConnection(SocketBase &&socket) override;
+
+    private:
+        HashPluginRef _hasher;
+        BlockSubmitter &_blockSubmitter;
+
+        ByteString _coinbaseId;
+
+        BlockGenerationInformationRef _generationInformation;
+
+        std::vector<Pool> pools;
 };
 
 #endif

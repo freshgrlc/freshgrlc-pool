@@ -20,6 +20,8 @@ class NetworkState
 
         NetworkState(uint32_t version, uint32_t bits, uint32_t blockHeight, const BlockHash &previousBlock, const Hash256 &miningTarget, uint64_t coinbaseCoins);
         NetworkState(uint32_t version, uint32_t bits, uint32_t notBefore, uint32_t blockHeight, const BlockHash &previousBlock, const Hash256 &miningTarget, uint64_t coinbaseCoins);
+
+        bool operator!=(const NetworkState &them) const;
 };
 
 #include <memory>

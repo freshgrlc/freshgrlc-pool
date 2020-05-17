@@ -40,3 +40,19 @@ NetworkState::NetworkState(uint32_t version, uint32_t bits, uint32_t notBefore, 
     coinbaseCoins(coinbaseCoins)
 {
 }
+
+bool NetworkState::operator!=(const NetworkState &them) const
+{
+    /*
+     *  Although this is operator abuse, there really is not much
+     *  point checking the other stuff.
+     */
+
+    if (this->blockHeight != them.blockHeight)
+        return true;
+
+    if (!(this->previousBlock == them.previousBlock))
+        return true;
+
+    return false;
+}

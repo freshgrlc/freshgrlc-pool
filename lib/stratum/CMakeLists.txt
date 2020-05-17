@@ -7,7 +7,9 @@ include_directories(.)
 add_definitions(-DMODULE=stratum)
 
 add_library(stratum STATIC
-            NetworkState.cpp StratumCall.cpp StratumClientConnection.cpp StratumJob.cpp StratumServer.cpp
+            BlockGenerationInformation.cpp JobManager.cpp NetworkState.cpp
+            StratumClientConnection.cpp StratumJob.cpp StratumServer.cpp
+            StratumCall.cpp
             calls/MiningAuthorize.cpp calls/MiningExtraNonceSubscribe.cpp calls/MiningSubmit.cpp calls/MiningSubscribe.cpp)
 
 target_link_libraries(stratum PRIVATE nlohmann_json::nlohmann_json OpenSSL::SSL)

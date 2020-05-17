@@ -9,7 +9,7 @@
 #include <mining/RawTransactions.h>
 #include <interfaces/plugins/HashPlugin.h>
 
-#include "NetworkState.h"
+#include "BlockGenerationInformation.h"
 
 
 #ifndef INCLUDE_NLOHMANN_JSON_HPP_
@@ -32,7 +32,7 @@ class StratumJob
                 using runtime_error::runtime_error;
         };
 
-        StratumJob(uint32_t id, double diff, const NetworkStateRef &networkState, const CoinbaseTransactionRef &coinbase, const RawTransactionsRef &transactions, const MerkleBranchRef &merkleBranch, HashPluginRef hasher);
+        StratumJob(uint32_t id, double diff, const BlockGenerationInformationRef &generationInformation, const CoinbaseTransactionRef &coinbase, HashPluginRef hasher);
         StratumJob(const StratumJob &them);
 
         json toJson(bool force) const;
@@ -48,10 +48,8 @@ class StratumJob
         double _diff;
         uint32_t _creationTime;
 
-        NetworkStateRef networkState;
+        BlockGenerationInformationRef generationInformation;
         CoinbaseTransactionRef coinbase;
-        RawTransactionsRef transactions;
-        MerkleBranchRef merkleBranch;
 
         HashPluginRef hasher;
 };

@@ -10,7 +10,7 @@ class BlockSubmitter
 {
     public:
         inline virtual ~BlockSubmitter(void) {}
-        virtual void submitBlock(const BlockHeader &header, const ByteString &coinbaseTransaction, RawTransactionsRef otherTransactions) = 0;
+        virtual void submitBlock(const BlockHeader &header, const ByteString &coinbaseTransaction, const RawTransactions &otherTransactions) = 0;
 };
 
 #include <memory>

@@ -12,6 +12,7 @@
 
 class StratumServer;
 class StratumJob;
+class JobManager;
 
 class StratumClientConnection : public IncomingConnection
 {
@@ -43,6 +44,8 @@ class StratumClientConnection : public IncomingConnection
         inline nonce1_t extraNonce1(void) const     { return *((const nonce1_t *) &_connectionId.begin()[0]); }
         inline StratumServer &server(void)          { return _server; }
 
+        JobManager &jobManager(bool exceptionOnNull = true) const;
+
     private:
         StratumServer &_server;
         std::string clientSoftware;
@@ -55,6 +58,7 @@ class StratumClientConnection : public IncomingConnection
 
         std::vector<std::unique_ptr<StratumJob>> jobs;
         StratumJob *activeJob;
+        JobManager *_jobManager;
         Lock _jobsLock;
 
         ByteString genConnectionID(void) const;

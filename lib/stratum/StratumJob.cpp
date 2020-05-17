@@ -24,29 +24,25 @@ static std::string int2hex(int_t i, bool littleEndian = false)
     return encoded.reverse().asHex();
 }
 
-StratumJob::StratumJob(uint32_t id, double diff, const NetworkStateRef &networkState, const CoinbaseTransactionRef &coinbase, const RawTransactionsRef &transactions, const MerkleBranchRef &merkleBranch, HashPluginRef hasher) :
+StratumJob::StratumJob(uint32_t id, double diff, const BlockGenerationInformationRef &generationInformation, const CoinbaseTransactionRef &coinbase, HashPluginRef hasher) :
     _id(id),
     _diff(diff),
-    networkState(networkState),
+    generationInformation(generationInformation),
     coinbase(coinbase),
-    transactions(transactions),
-    merkleBranch(merkleBranch),
     hasher(hasher)
 {
     _creationTime = (uint32_t) std::time(NULL);
 
-    if (_creationTime < networkState->miningStartTime)
-        _creationTime = networkState->miningStartTime;
+    if (_creationTime < generationInformation->networkState.miningStartTime)
+        _creationTime = generationInformation->networkState.miningStartTime;
 }
 
 StratumJob::StratumJob(const StratumJob &them) :
     _id(them._id),
     _diff(them._diff),
     _creationTime(them._creationTime),
-    networkState(them.networkState),
+    generationInformation(them.generationInformation),
     coinbase(them.coinbase),
-    transactions(them.transactions),
-    merkleBranch(them.merkleBranch),
     hasher(them.hasher)
 {
 }
@@ -68,7 +64,7 @@ json StratumJob::toJson(bool force) const
      */
 
     uint256_t previousBlockHash;
-    memcpy(&previousBlockHash, &this->networkState->previousBlock.raw(), sizeof(previousBlockHash));
+    memcpy(&previousBlockHash, &this->generationInformation->networkState.previousBlock.raw(), sizeof(previousBlockHash));
     swap32_256(previousBlockHash);
 
     return json::array({
@@ -76,9 +72,9 @@ json StratumJob::toJson(bool force) const
         Hash256(previousBlockHash).bytes().asHex(),
         this->coinbase->part1().asHex(),
         this->coinbase->part2().asHex(),
-        this->merkleBranch->asHexArray(),
-        int2hex(this->networkState->version),
-        int2hex(this->networkState->bits, true),
+        this->generationInformation->merkleBranch.asHexArray(),
+        int2hex(this->generationInformation->networkState.version),
+        int2hex(this->generationInformation->networkState.bits, true),
         int2hex(this->creationTime()),
         force
     });
@@ -96,17 +92,17 @@ bool StratumJob::checkSolution(uint32_t time, uint32_t nonce, CoinbaseTransactio
     rawCoinbaseTx += this->coinbase->part2();
 
     Hash256 coinbaseTxId = sha256dHasher->hash(rawCoinbaseTx);
-    MerkleRoot merkleRoot = this->merkleBranch->getRoot(coinbaseTxId);
-    BlockHeader header(this->networkState->version, this->networkState->previousBlock, merkleRoot, time, this->networkState->bits, nonce);
+    MerkleRoot merkleRoot = this->generationInformation->merkleBranch.getRoot(coinbaseTxId);
+    BlockHeader header(this->generationInformation->networkState.version, this->generationInformation->networkState.previousBlock, merkleRoot, time, this->generationInformation->networkState.bits, nonce);
     BlockHash hash = header.hash(this->hasher);
 
     mlog(DEBUG, "[%s] Received solution from miner: time %08x, nonce %08x, extraNonce2 %08x, share %s", logId, time, nonce, extraNonce2, hash.bytes().asHex().c_str());
 
-    bool submit = hash <= this->networkState->miningTarget;
+    bool submit = hash <= this->generationInformation->networkState.miningTarget;
 
     /* Async */
     if (submit)
-        blockSubmitter.submitBlock(header, rawCoinbaseTx, this->transactions);
+        blockSubmitter.submitBlock(header, rawCoinbaseTx, this->generationInformation->transactions);
 
     double shareDiff = Hash256::diff1() / hash / 0x1000;
     double shareMiningDiff = shareDiff * 0x100;
@@ -121,7 +117,7 @@ bool StratumJob::checkSolution(uint32_t time, uint32_t nonce, CoinbaseTransactio
 
 #ifdef SHARE_TARGET_DEBUG
     mlog(DEBUG, "[%s] Share  %s %s below", logId, hash.bytes().asHex().c_str(), submit ? "WAS" : "was not");
-    mlog(DEBUG, "[%s] target %s%s", logId, this->networkState->miningTarget.bytes().asHex().c_str(), submit ? ", SUBMITTED!" : "");
+    mlog(DEBUG, "[%s] target %s%s", logId, this->generationInformation->networkState.miningTarget.bytes().asHex().c_str(), submit ? ", SUBMITTED!" : "");
 #endif
 
     return submit;
