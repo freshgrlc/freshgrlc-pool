@@ -8,12 +8,12 @@
 class MerkleBranch : public std::vector<MerkleNode>
 {
     public:
-        std::vector<std::string> asHexArray(void);
+        std::vector<std::string> asHexArray(void) const;
 
-        MerkleRoot getRoot(const Hash256 &leaf);
+        MerkleRoot getRoot(const Hash256 &leaf) const;
 
     private:
-        MerkleNode hashRecursive(const MerkleNode &hash, iterator it);
+        MerkleNode hashRecursive(const MerkleNode &hash, const_iterator it) const;
 };
 
 #include <memory>
