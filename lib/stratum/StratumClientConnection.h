@@ -43,6 +43,7 @@ class StratumClientConnection : public IncomingConnection
         inline const char *logId(void) const        { return _logId.c_str(); }
         inline nonce1_t extraNonce1(void) const     { return *((const nonce1_t *) &_connectionId.begin()[0]); }
         inline StratumServer &server(void)          { return _server; }
+        inline bool isPooled(void)                  { return !!_jobManager; }
 
         JobManager &jobManager(bool exceptionOnNull = true) const;
 

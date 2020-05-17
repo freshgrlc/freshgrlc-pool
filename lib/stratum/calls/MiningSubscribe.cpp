@@ -36,5 +36,7 @@ void MiningSubscribe::process(StratumClientConnection &connection)
     };
 
     connection.sendReply(*this, reply);
-    connection.sendJob();
+
+    if (connection.isPooled())
+        connection.sendJob();
 }
