@@ -6,3 +6,8 @@ const Script CoinbaseCommitment::redeemScript()
 {
     return Script() << OP_RETURN << this->commitment;
 }
+
+bool CoinbaseCommitment::isCommitment(const AbstractCoinbaseOutput &output)
+{
+    return output.redeemScript()[0] == OP_RETURN;
+}

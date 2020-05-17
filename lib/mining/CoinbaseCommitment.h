@@ -16,6 +16,8 @@ class CoinbaseCommitment : public AbstractCoinbaseOutput
         const ByteString commitment;
 
         const script::Script redeemScript(void) override;
+
+        static bool isCommitment(const AbstractCoinbaseOutput &output);
 };
 
 #endif
