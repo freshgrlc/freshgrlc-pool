@@ -1,31 +1,38 @@
 #include "DaemonConnector.h"
 
 DaemonConnector::DaemonConnector(const std::string &username, const std::string &password, const std::string &host, int port) : RPCConnection(username, password, host, port),
-    poller(*this)
+    _poller(*this),
+    _blockSubmitter(*this),
+    _stratumInitializer(*this),
+    _stratum(nullptr)
 {
-    this->poller.start();
 }
 
-NetworkStateRef DaemonConnector::getNetworkState()
+NetworkState DaemonConnector::getNetworkState()
 {
     return this->getNetworkState(this->getBlockTemplate());
 }
 
-NetworkStateRef DaemonConnector::getNetworkState(const BlockTemplate &rpcBlockTemplate) const
+NetworkState DaemonConnector::getNetworkState(const BlockTemplate &rpcBlockTemplate) const
 {
-    return std::make_shared<NetworkState>(
+    return {
         rpcBlockTemplate.version,
         rpcBlockTemplate.miningTargetBits,
-        rpcBlockTemplate.notBefore,
+        (uint32_t) rpcBlockTemplate.notBefore,
         rpcBlockTemplate.height,
         rpcBlockTemplate.previousBlockHash,
         rpcBlockTemplate.miningTarget,
         rpcBlockTemplate.coinbaseCoins
-    );
+    };
 }
 
-void DaemonConnector::updateStratumServers(const NetworkStateRef &newNetworkState)
+void DaemonConnector::registerUpdateNotificationsFor(StratumServer &stratumServer)
 {
-    for (auto server : this->servers)
-        server->updateNetworkState(newNetworkState);
+    _stratum = &stratumServer;
+    _poller.start();
+}
+
+void DaemonConnector::updateStratumServer(NetworkState &&newNetworkState)
+{
+    _stratum->updateNetworkState(std::move(newNetworkState));
 }

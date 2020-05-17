@@ -19,9 +19,9 @@ class DaemonConnector : public RPCConnection
                 inline BlockSubmitter(DaemonConnector &parent) : parent(parent) {}
                 inline ~BlockSubmitter(void) override {}
 
-                inline void submitBlock(const BlockHeader &header, const ByteString &coinbaseTransaction, RawTransactionsRef otherTransactions) override
+                inline void submitBlock(const BlockHeader &header, const ByteString &coinbaseTransaction, const RawTransactions &otherTransactions) override
                 {
-                    this->parent.submitBlock(header, coinbaseTransaction, *otherTransactions);
+                    this->parent.submitBlock(header, coinbaseTransaction, otherTransactions);
                 }
 
             private:
@@ -33,7 +33,7 @@ class DaemonConnector : public RPCConnection
             public:
                 inline StratumInitializer(DaemonConnector &parent) : parent(parent) {}
 
-                inline NetworkStateRef getNetworkState(void) const override
+                inline NetworkState getNetworkState(void) const override
                 {
                     return parent.getNetworkState();
                 }
@@ -47,24 +47,24 @@ class DaemonConnector : public RPCConnection
 
         DaemonConnector(const std::string &username, const std::string &password, const std::string &host, int port);
 
-        NetworkStateRef getNetworkState(void);
-        void updateStratumServers(const NetworkStateRef &newNetworkState);
+        void registerUpdateNotificationsFor(StratumServer &stratumServer);
 
-        inline BlockSubmitterRef blockSubmitter(void)
-        {
-            return std::make_unique<BlockSubmitter>(*this);
-        }
+        inline BlockSubmitter &blockSubmitter(void)             { return _blockSubmitter; }
+        inline StratumInitializer &stratumInitializer(void)     { return _stratumInitializer; }
 
-        inline void registerServer(StratumServer &stratumServer)
-        {
-            this->servers.push_back(&stratumServer);
-        }
+    protected:
+        friend class BlockTemplatePoller;
+
+        void updateStratumServer(NetworkState &&newNetworkState);
 
     private:
-        BlockTemplatePoller poller;
-        std::vector<StratumServer *> servers;
+        BlockTemplatePoller _poller;
+        BlockSubmitter _blockSubmitter;
+        StratumInitializer _stratumInitializer;
+        StratumServer *_stratum;
 
-        NetworkStateRef getNetworkState(const BlockTemplate &rpcBlockTemplate) const;
+        NetworkState getNetworkState(void);
+        NetworkState getNetworkState(const BlockTemplate &rpcBlockTemplate) const;
 
         friend class BlockTemplatePoller;
 };

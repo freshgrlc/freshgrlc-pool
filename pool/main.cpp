@@ -1,11 +1,12 @@
 #include "DaemonConnector.h"
 #include "StratumConfiguration.h"
-#include "Pool.h"
 
 #include <iostream>
 #include <unistd.h>
 
 #include <mining/CoinbaseOutput.h>
+#include <mining/hashplugin.h>
+#include <stratum/StratumServer.h>
 
 #include <util/CommandLineArguments.h>
 #include <util/logger.h>
@@ -13,16 +14,6 @@
 
 #define MINE_ADDRESS    "faf51e196d9190efb9892a55533c89e71c37b6c0"
 
-class StratumInitializer : public DaemonConnector::StratumInitializer
-{
-    public:
-        using DaemonConnector::StratumInitializer::StratumInitializer;
-
-        inline void populateCoinbaseOutputs(CoinbaseOutputs &outputs) const override
-        {
-            outputs.push_back(std::make_shared<CoinbaseOutput>(CoinbaseOutput::p2pkh(ByteString::fromHex(MINE_ADDRESS), 1)));
-        }
-};
 
 static void enableDebugLogging()
 {
@@ -68,8 +59,10 @@ int main(int argc, char *argv[])
     try
     {
         StratumConfiguration configuration(stratumPort, miningAlgorithm, coinbaseSignature, 10.0);
-        DaemonConnectorRef daemon = std::make_shared<DaemonConnector>(rpcUsername, rpcPassword, rpcHostname, rpcPort);
-        Pool pool(daemon, StratumInitializer(*daemon), configuration);
+        DaemonConnector daemon(rpcUsername, rpcPassword, rpcHostname, rpcPort);
+        StratumServer server(Listener(configuration.port), daemon.stratumInitializer(), daemon.blockSubmitter(), get_hashplugin(configuration.hashingAlgorithm), configuration.coinbaseSignature);
+
+        daemon.registerUpdateNotificationsFor(server);
 
         for (;;) pause();
     }

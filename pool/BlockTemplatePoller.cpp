@@ -56,5 +56,5 @@ void BlockTemplatePoller::poll()
 
 void BlockTemplatePoller::updateNetworkState(const BlockTemplate &blockTemplate)
 {
-    this->parent.updateStratumServers(this->parent.getNetworkState(blockTemplate));
+    this->parent.updateStratumServer(this->parent.getNetworkState(blockTemplate));
 }
