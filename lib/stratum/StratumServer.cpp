@@ -17,6 +17,7 @@ StratumServer::StratumServer(Listener &&listener, const NetworkStateInitializer 
 {
     /* Initialize server */
     this->updateNetworkState(initializer.getNetworkState());
+    this->startProcessing();
 }
 
 IncomingConnectionRef StratumServer::makeConnection(SocketBase &&socket)
