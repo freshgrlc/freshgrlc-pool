@@ -54,7 +54,7 @@ BlockChainInfo RPCConnection::getBlockChainInfo()
 
 BlockTemplate RPCConnection::getBlockTemplate()
 {
-    auto _response = this->sendAndReceivePayload("getblocktemplate", (json) { (json) {{ "rules", (json) { "segwit" }}}});
+    auto _response = this->sendAndReceivePayload("getblocktemplate", json::array({ (json) {{ "rules", (json) { "segwit" }}}}));
 
     if (!_response)
         throw std::runtime_error("getblocktemplate RPC failure");
