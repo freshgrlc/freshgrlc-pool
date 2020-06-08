@@ -13,6 +13,12 @@
 static Lock _gethostbyname2_lock;
 
 
+void Socket::setStreamParser(Socket::StreamParserRef &&streamParser)
+{
+    streamParser->parent = this;
+    this->streamParser = std::move(streamParser);
+}
+
 void Socket::send(const Packet &packet)
 {
     ssize_t len = write(_fd, packet.data, packet.length);
@@ -35,14 +41,19 @@ void Socket::send(const Packet &packet)
 void Socket::receive()
 {
     uint8_t buffer[8192];
-    int len;
+    ssize_t len;
 
     for (;;)
     {
         len = read(_fd, buffer, sizeof(buffer));
 
         if (len > 0)
-            this->onReceive(Packet(buffer, len));
+        {
+            if (this->streamParser)
+                this->streamParser->processPacket({ buffer, (size_t) len });
+            else
+                this->onReceive({ buffer, (size_t) len });
+        }
         else
         {
             if (!len)
@@ -145,4 +156,18 @@ int Socket::openConnectionTo(const std::string &host, int port)
     mlog(DEBUG, "Connected to '%s:%d'.", host.c_str(), port);
 
     return fd;
+}
+
+void Socket::StreamParser::processPacket(const Packet &packet)
+{
+    this->buffer += packet;
+
+    while (size_t packetSize = this->getReceivedMessageSize(this->buffer))
+    {
+        ByteString oldBuffer = std::move(this->buffer);
+
+        this->buffer = ByteString(oldBuffer.data() + packetSize, oldBuffer.size() - packetSize);
+
+        this->parent->onReceive({ oldBuffer.data(), packetSize });
+    }
 }
