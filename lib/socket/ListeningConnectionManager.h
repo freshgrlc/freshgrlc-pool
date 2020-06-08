@@ -17,6 +17,9 @@ class ListeningConnectionManager : public ConnectionManager
         inline Listener &listener(void)             { return _listener; }
         inline void startProcessing(void)           { _listenerThread.start(); }
 
+    protected:
+        int listen(void);
+
     private:
         class ListenerThread : public Thread
         {
@@ -30,8 +33,6 @@ class ListeningConnectionManager : public ConnectionManager
 
         Listener _listener;
         ListenerThread _listenerThread;
-
-        int listen(void);
 };
 
 #endif
