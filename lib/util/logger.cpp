@@ -35,6 +35,14 @@ void log_raw(const char *module, const char *level_s, int level, const char *tem
     char timestamp[MAX_TIMESTAMP_SIZE];
     va_list varargs;
 
+    static bool inited = false;
+
+    if (!inited)
+    {
+        setvbuf(stderr, NULL, _IOLBF, 0);
+        inited = true;
+    }
+
     if (level < __loglevel)
         return;
 
@@ -52,4 +60,5 @@ void log_raw(const char *module, const char *level_s, int level, const char *tem
     va_end(varargs);
 
     fputc('\n', stderr);
+    fflush(stderr);
 }
