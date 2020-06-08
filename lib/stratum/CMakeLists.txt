@@ -12,4 +12,5 @@ add_library(stratum STATIC
             StratumCall.cpp
             calls/MiningAuthorize.cpp calls/MiningExtraNonceSubscribe.cpp calls/MiningSubmit.cpp calls/MiningSubscribe.cpp)
 
-target_link_libraries(stratum PRIVATE nlohmann_json::nlohmann_json OpenSSL::SSL)
+set_property(TARGET stratum PROPERTY POSITION_INDEPENDENT_CODE ON)
+target_link_libraries(stratum PRIVATE OpenSSL::SSL)
