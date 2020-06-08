@@ -22,5 +22,7 @@ add_subdirectory(lib/messagebus)
 add_subdirectory(plugins)
 
 add_subdirectory(pool)
+add_subdirectory(mbus-relayd)
 
 add_subdirectory(utils/crawler)
+add_subdirectory(utils/mbus-test)
