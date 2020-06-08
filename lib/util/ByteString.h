@@ -32,6 +32,20 @@ class ByteString : public std::vector<uint8_t>
         template <typename T>
         inline ByteString &operator<<(const T &toAppend)                { return *this += ConstByteStringRef::raw(toAppend); }
 
+        template <>
+        inline ByteString &operator<<(const ConstByteStringRef &toAppend)
+        {
+            *this << (uint32_t) toAppend.length;
+            *this += toAppend;
+            return *this;
+        }
+
+        template <>
+        inline ByteString &operator<<(const ByteString &toAppend)       { return *this << (ConstByteStringRef) toAppend; }
+
+        template <>
+        inline ByteString &operator<<(const std::string &toAppend)      { return *this << (ConstByteStringRef) toAppend; }
+
         inline ByteString operator+(const ConstByteStringRef &toAppend) { ByteString copy(*this); copy += toAppend; return copy; }
         inline ByteString operator+(const ByteString &toAppend)         { return *this + ConstByteStringRef(toAppend); }
 

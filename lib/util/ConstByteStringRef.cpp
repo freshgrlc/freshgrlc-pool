@@ -1,4 +1,6 @@
 #include "ConstByteStringRef.h"
+#include "ByteString.h"
+
 
 std::string ConstByteStringRef::asHexPretty(const std::string prefix, const std::string postfix, int groupSize, char delimiter) const
 {
@@ -15,4 +17,14 @@ std::string ConstByteStringRef::asHexPretty(const std::string prefix, const std:
     }
 
     return hex + postfix;
+}
+
+ConstByteStringRef ConstByteStringRef::raw(const ByteString &v)
+{
+    return ConstByteStringRef(v.data(), v.size());
+}
+
+ByteStringReader ConstByteStringRef::reader() const
+{
+    return ByteStringReader(*this);
 }

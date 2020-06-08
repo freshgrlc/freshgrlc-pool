@@ -5,6 +5,9 @@
 #include <vector>
 #include <string>
 
+class ByteString;
+class ByteStringReader;
+
 class ConstByteStringRef
 {
     public:
@@ -42,6 +45,16 @@ class ConstByteStringRef
         template <class T>
         inline static ConstByteStringRef raw(const T &v)    { return ConstByteStringRef((const uint8_t *) &v, sizeof(T)); }
 
+        inline static ConstByteStringRef raw(const ConstByteStringRef &v)
+                                                            { return v; }
+
+        inline static ConstByteStringRef raw(const std::string &v)
+                                                            { return (ConstByteStringRef) v; }
+
+        static ConstByteStringRef raw(const ByteString &v);
+
+        ByteStringReader reader(void) const;
 };
 
+#include "ByteStringReader.h"
 #endif
