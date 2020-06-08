@@ -51,6 +51,17 @@ void Thread::start()
     }
 }
 
+void Thread::setOwnState(State state)
+{
+    if ((void *) pthread_self() != this->threadId())
+    {
+        mlog(WARNING, "Thread %p trying to change running state of thread %p!", (void *) pthread_self(), this->threadId());
+        return;
+    }
+
+    _state = state;
+}
+
 void Thread::initializationCallback(int errorCode)
 {
     if (errorCode)
@@ -61,7 +72,10 @@ void Thread::entrypoint()
 {
     int dummy;
 
-    OBTAIN_LOCK(_thread_run_lock);
+    /* Only used to block during startup */
+    {
+        OBTAIN_LOCK(_thread_run_lock);
+    }
 
     this->main();
 

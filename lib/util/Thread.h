@@ -23,6 +23,8 @@ class Thread
 
         void start(void);
 
+        void setOwnState(State state);
+
         inline State state(void) const      { return _state; }
         inline void *threadId(void) const   { return (void *) _thread; }
 
